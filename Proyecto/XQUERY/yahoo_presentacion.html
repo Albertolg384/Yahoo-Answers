@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yahoo! Answers — Análisis XQuery · UCLM 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sci:#185FA5;--edu:#0F6E56;--soc:#993C1D;--art:#533AB7;
+  --sci-l:#E6F1FB;--edu-l:#E1F5EE;--soc-l:#FAECE7;--art-l:#EEEDFE;
+  --gold:#9A6A00;--gold-l:#FFF8E7;--gold-b:#C8930A;
+  --text:#1a1a1a;--muted:#666;--border:#ddd;--bg:#f5f5f0;--white:#fff;
+  --font-serif:Georgia,'Times New Roman',serif;
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+}
+body{font-family:var(--font-sans);color:var(--text);background:var(--bg);font-size:14px}
+
+.site-header{background:var(--white);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.site-header h1{font-family:var(--font-serif);font-size:1.2rem;font-weight:normal;color:#333}
+.site-header h1 span{color:var(--sci);font-weight:bold}
+.site-header .meta{font-size:.73rem;color:var(--muted);text-align:right;line-height:1.6}
+.subtitle-bar{background:var(--sci);color:#fff;padding:.4rem 2rem;font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase}
+
+.nav-tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;overflow-x:auto}
+.nav-tabs button{background:none;border:none;border-bottom:2.5px solid transparent;padding:.7rem 1rem;font-size:.77rem;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.nav-tabs button:hover{color:var(--text)}
+.nav-tabs button.active{color:var(--sci);border-bottom-color:var(--sci)}
+
+.main{max-width:1180px;margin:0 auto;padding:1.5rem 2rem}
+.section{display:none}.section.active{display:block}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.25rem}
+.stat-card{background:var(--white);border:.5px solid var(--border);border-radius:8px;padding:.9rem 1.1rem;border-top:3px solid}
+.stat-card.sci{border-top-color:var(--sci)}.stat-card.edu{border-top-color:var(--edu)}
+.stat-card.soc{border-top-color:var(--soc)}.stat-card.art{border-top-color:var(--art)}
+.stat-card.gold{border-top-color:var(--gold-b)}
+.stat-label{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.25rem}
+.stat-value{font-size:1.6rem;font-weight:700;line-height:1}
+.stat-sub{font-size:.67rem;color:var(--muted);margin-top:.2rem}
+.stat-card.sci .stat-value{color:var(--sci)}.stat-card.edu .stat-value{color:var(--edu)}
+.stat-card.soc .stat-value{color:var(--soc)}.stat-card.art .stat-value{color:var(--art)}
+.stat-card.gold .stat-value{color:var(--gold)}
+
+/* CALLOUT — all same gold */
+.callout{background:var(--gold-l);border-left:3px solid var(--gold-b);border-radius:0 6px 6px 0;padding:.6rem .9rem;margin-top:.85rem;font-size:.79rem;line-height:1.55;color:#333}
+.callout strong{color:var(--gold);font-weight:600}
+
+/* CHARTS */
+.chart-card{background:var(--white);border:.5px solid var(--border);border-radius:8px;padding:1.2rem;margin-bottom:1.1rem}
+.chart-title{font-family:var(--font-serif);font-size:.87rem;font-weight:bold;color:#222;margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:.5px solid #eee}
+.chart-title span{font-family:var(--font-sans);font-size:.7rem;font-weight:normal;color:var(--muted);display:block;margin-top:2px}
+.chart-wrap{position:relative;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:.7rem;font-size:.7rem;color:var(--muted)}
+.lsq{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+
+/* LAYOUT */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.1rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.1rem}
+
+/* QUALITY CARDS */
+.qcard{background:var(--white);border:.5px solid var(--border);border-radius:8px;padding:.9rem;text-align:center}
+.qval{font-size:2rem;font-weight:700;line-height:1}
+.qlbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-top:.2rem;line-height:1.3}
+.qexp{font-size:.68rem;color:#555;margin-top:.35rem;line-height:1.4;text-align:left;padding-top:.35rem;border-top:.5px solid #eee}
+.q-ok{color:#0F6E56}.q-warn{color:#9A6A00}.q-info{color:#185FA5}
+
+/* TABLE */
+.dtbl{width:100%;border-collapse:collapse;font-size:.74rem;margin-top:.4rem}
+.dtbl th{background:#f0f0ed;padding:.45rem .65rem;text-align:left;font-weight:600;border-bottom:1px solid var(--border);font-size:.66rem;text-transform:uppercase;letter-spacing:.4px;color:#555}
+.dtbl td{padding:.4rem .65rem;border-bottom:.5px solid #eee}
+.dtbl tr:last-child td{border-bottom:none}
+.dtbl tr:nth-child(even) td{background:#fafaf8}
+.badge{display:inline-block;font-size:.63rem;padding:1px 6px;border-radius:3px;font-weight:500}
+.b-sci{background:var(--sci-l);color:var(--sci)}.b-edu{background:var(--edu-l);color:var(--edu)}
+.b-soc{background:var(--soc-l);color:var(--soc)}.b-art{background:var(--art-l);color:var(--art)}
+
+@media(max-width:720px){.stat-grid,.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <h1><span>Yahoo!</span> Answers — Análisis XQuery Avanzado</h1>
+  <div class="meta">Alberto Lillo García · Manuel Caballero Bonilla<br>Bases de Datos Avanzadas · UCLM - ESI · Marzo 2026</div>
+</div>
+<div class="subtitle-bar">613.245 preguntas · 4 categorías · 5 bloques de análisis XQuery</div>
+
+<div class="nav-tabs">
+  <button class="active" onclick="show('b0',this)">Dataset</button>
+  <button onclick="show('b1',this)">B1 · Estadísticas</button>
+  <button onclick="show('b2',this)">B2 · Redes Sociales</button>
+  <button onclick="show('b3',this)">B3 · Cross-Categoría</button>
+  <button onclick="show('b4',this)">B4 · Calidad de Datos</button>
+  <button onclick="show('b5',this)">B5 · Temporal</button>
+</div>
+
+<div class="main">
+
+<!-- =============== B0 DATASET ===============═ -->
+<div id="b0" class="section active">
+  <div class="stat-grid">
+    <div class="stat-card sci"><div class="stat-label">Science &amp; Mathematics</div><div class="stat-value">183.354</div><div class="stat-sub">29,90% · 65 subcategorías</div></div>
+    <div class="stat-card edu"><div class="stat-label">Education &amp; Reference</div><div class="stat-value">234.604</div><div class="stat-sub">38,26% · 103 subcategorías</div></div>
+    <div class="stat-card soc"><div class="stat-label">Social Science</div><div class="stat-value">58.207</div><div class="stat-sub">9,49% · 33 subcategorías</div></div>
+    <div class="stat-card art"><div class="stat-label">Arts &amp; Humanities</div><div class="stat-value">137.080</div><div class="stat-sub">22,35% · 54 subcategorías</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Distribución del subset extraído<span>4.483.032 registros en el dataset original · 178 categorías disponibles · seleccionadas 4</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#185FA5"></span>Science &amp; Math</span>
+        <span><span class="lsq" style="background:#0F6E56"></span>Education &amp; Ref</span>
+        <span><span class="lsq" style="background:#993C1D"></span>Social Science</span>
+        <span><span class="lsq" style="background:#533AB7"></span>Arts &amp; Humanities</span>
+      </div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c_pie"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Idiomas del subset (campo qlang)<span>16 códigos de idioma distintos · el inglés representa más del 85% del total</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#185FA5"></span>en 85,40%</span>
+        <span><span class="lsq" style="background:#0F6E56"></span>es 6,07%</span>
+        <span><span class="lsq" style="background:#993C1D"></span>pt 3,10%</span>
+        <span><span class="lsq" style="background:#533AB7"></span>fr 2,99%</span>
+        <span><span class="lsq" style="background:#BA7517"></span>de+it+otros 2,45%</span>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c_lang"></canvas></div>
+      <div class="callout"><strong>Nota:</strong> El 6,07% en español incluye el código de región "e1" (Yahoo interno, no estándar ISO), que explica por qué combinaciones como "es-e1" aparecen en el dataset. Se analiza en detalle en el Bloque 4.</div>
+    </div>
+  </div>
+</div>
+
+<!-- =============== B1 ESTADÍSTICAS =============== -->
+<div id="b1" class="section">
+
+  <!-- Q1 primero: perfil general -->
+  <div class="chart-card">
+    <div class="chart-title">Q1 · Perfil estadístico por categoría</div>
+    <table class="dtbl">
+      <tr><th>Categoría</th><th>Total preguntas</th><th>Sin campo content</th><th>Media respuestas alt.</th><th>Máx respuestas alt.</th></tr>
+      <tr><td><span class="badge b-sci">Science &amp; Math</span></td><td>183.354</td><td>94.589 (51,6%)</td><td>5,10</td><td>868</td></tr>
+      <tr><td><span class="badge b-edu">Education &amp; Ref</span></td><td>234.604</td><td>115.219 (49,1%)</td><td>4,73</td><td><strong>1.422</strong></td></tr>
+      <tr><td><span class="badge b-soc">Social Science</span></td><td>58.207</td><td>23.709 (40,7%)</td><td><strong>9,57</strong></td><td>737</td></tr>
+      <tr><td><span class="badge b-art">Arts &amp; Humanities</span></td><td>137.080</td><td>64.894 (47,3%)</td><td>6,85</td><td>336</td></tr>
+    </table>
+    <div class="callout">
+      <strong>Dos datos destacados:</strong> Social Science genera casi el doble de respuestas alternativas por pregunta (9,57) que Education (4,73) — las preguntas de opinión atraen más participación. Y la pregunta con más respuestas de todo el dataset pertenece a Education &amp; Reference, con 1.422 respuestas alternativas acumuladas. El campo <em>content</em> (descripción extendida de la pregunta) está ausente en aproximadamente la mitad de los registros de todas las categorías; esto no impide el análisis porque la mayor parte del contenido útil está en los campos <em>subject</em> y <em>bestanswer</em>.
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="chart-card">
+    <div class="chart-title">Q2 · Top 15 subcategorías más activas<span>El color de cada barra indica a qué categoría principal pertenece la subcategoría</span></div>
+    <div class="legend">
+      <span><span class="lsq" style="background:#185FA5"></span>Science &amp; Math</span>
+      <span><span class="lsq" style="background:#0F6E56"></span>Education &amp; Ref</span>
+      <span><span class="lsq" style="background:#993C1D"></span>Social Science</span>
+      <span><span class="lsq" style="background:#533AB7"></span>Arts &amp; Humanities</span>
+    </div>
+    <div class="chart-wrap" style="height:420px"><canvas id="c_q2"></canvas></div>
+    <div class="callout">
+      <strong>Hallazgo clave:</strong> Homework Help acumula 54.439 preguntas — más que cualquier otra subcategoría y casi el doble que la segunda (Other-Education, que agrupa preguntas educativas que no encajan en ninguna subcategoría más específica). Las tres primeras posiciones son subcategorías de Education, confirmando el uso masivo de Yahoo Answers como herramienta de apoyo escolar. Por otro lado, Philosophy (5.ª posición, 23.008 preguntas) supera a Biology y Chemistry: siendo una subcategoría de Arts &amp; Humanities donde las respuestas no son únicas ni verificables, atrae más participación que las ciencias exactas. Psychology es la única subcategoría de Social Science en el top 15.
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="chart-card">
+    <div class="chart-title">Q4 · ¿Quién elige la mejor respuesta? — autor vs comunidad<span>Presencia del campo vot_date = elegida por votación comunitaria · ausencia = elegida por el autor de la pregunta</span></div>
+    <div class="legend">
+      <span><span class="lsq" style="background:#185FA5"></span>Comunidad (Science)</span>
+      <span><span class="lsq" style="background:#0F6E56"></span>Comunidad (Education)</span>
+      <span><span class="lsq" style="background:#993C1D"></span>Comunidad (Social)</span>
+      <span><span class="lsq" style="background:#533AB7"></span>Comunidad (Arts)</span>
+      <span><span class="lsq" style="background:#88AACC"></span>Autor (Science)</span>
+      <span><span class="lsq" style="background:#66AA88"></span>Autor (Education)</span>
+      <span><span class="lsq" style="background:#CC8877"></span>Autor (Social)</span>
+      <span><span class="lsq" style="background:#9988CC"></span>Autor (Arts)</span>
+    </div>
+    <div class="chart-wrap" style="height:220px"><canvas id="c_q4"></canvas></div>
+    <div class="callout">
+      <strong>Hallazgo clave:</strong> Social Science es la única categoría sin una mayoría comunitaria clara (52,85% comunidad vs 47,15% autor), mientras que en Education &amp; Reference la comunidad decide el 70,39% de las veces. La explicación está en la naturaleza de las preguntas: cuando la respuesta es objetiva y verificable (matemáticas, biología, referencia educativa), la comunidad converge fácilmente en la mejor respuesta. Cuando es subjetiva — como ocurre en psicología (subcategoría de Social Science) o filosofía (subcategoría de Arts &amp; Humanities) — el autor prefiere decidir él mismo, ya que no existe una respuesta objetivamente correcta.
+    </div>
+  </div>
+</div>
+
+<!-- =============== B2 REDES SOCIALES =============== -->
+<div id="b2" class="section">
+  <div class="grid-3">
+    <div class="stat-card sci"><div class="stat-label">Top respondedor global</div><div class="stat-value" style="font-size:1rem">u483503</div><div class="stat-sub">1.822 respuestas elegidas como mejor respuesta</div></div>
+    <div class="stat-card edu"><div class="stat-label">Usuarios bidireccionales</div><div class="stat-value">2</div><div class="stat-sub">En el top-200 de respondedores Y preguntadores</div></div>
+    <div class="stat-card gold"><div class="stat-label">Par más frecuente</div><div class="stat-value" style="font-size:1rem">54 veces</div><div class="stat-sub">u1507887 → u316809 (unidireccional)</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Q5 · Top 20 respondedores<span>Número de veces que cada usuario fue elegido como mejor respuesta (identificado por best_id)</span></div>
+      <div class="chart-wrap" style="height:490px"><canvas id="c_q5"></canvas></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> u483503 lidera con 1.822 respuestas elegidas, un 50% más que el segundo clasificado (u1375495, 1.210). Esta brecha tan pronunciada es habitual en plataformas de conocimiento colaborativo: un pequeño grupo de usuarios hiperactivos concentra la mayor parte de las respuestas aceptadas, mientras la inmensa mayoría contribuye ocasionalmente.
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Q9 · Categoría dominante de los top 10 respondedores<span>Distribución de sus respuestas elegidas entre las 4 categorías del subset</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#185FA5"></span>Science &amp; Math</span>
+        <span><span class="lsq" style="background:#0F6E56"></span>Education &amp; Ref</span>
+        <span><span class="lsq" style="background:#993C1D"></span>Social Science</span>
+        <span><span class="lsq" style="background:#533AB7"></span>Arts &amp; Humanities</span>
+      </div>
+      <div class="chart-wrap" style="height:350px"><canvas id="c_q9"></canvas></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> La mayoría de los grandes respondedores se especializan en una sola categoría: u893686 (97,7% en Science), u1375495 (99,9% en Education), u854180 (100% en Science). Sin embargo, hay excepciones notables: u1729248 y u1694623 distribuyen sus respuestas de forma más equilibrada entre categorías, demostrando que también es posible ser un respondedor de alto volumen sin especializarse en una única área temática.
+      </div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Q10 · Perfil generalista vs especialista — top 50 respondedores<span>Número de categorías en las que cada respondedor tiene al menos una respuesta elegida</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#185FA5"></span>4 categorías — "generalista" (31 usuarios · 62%)</span>
+        <span><span class="lsq" style="background:#5B9AD5"></span>3 categorías (13 usuarios · 26%)</span>
+        <span><span class="lsq" style="background:#9FC5E8"></span>2 categorías (3 usuarios · 6%)</span>
+        <span><span class="lsq" style="background:#993C1D"></span>1 categoría — especialista puro (3 usuarios · 6%)</span>
+      </div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c_q10"></canvas></div>
+      <div class="callout">
+        <strong>Atención al matiz:</strong> Que el 62% aparezca como "generalista" (activo en 4 categorías) no significa que respondan por igual en todas. Muchos tienen más del 90-99% de sus respuestas en una única categoría y alguna respuesta aislada en las demás. La distinción relevante es entre los 3 especialistas puros (100% en una categoría) y el resto.
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Q8 · Red de pares preguntador-respondedor más frecuentes<span>Cada nodo es un usuario · las aristas muestran cuántas veces uno respondió preguntas del otro · azul = bidireccional</span></div>
+      <svg id="svg_q8" viewBox="0 0 460 290" style="width:100%;max-height:255px;overflow:visible"></svg>
+      <div id="q8_tooltip" style="display:none;position:fixed;background:#333;color:#fff;padding:4px 9px;border-radius:4px;font-size:.72rem;pointer-events:none;z-index:999"></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> Los pares más frecuentes muestran relaciones de confianza establecida. El par más activo es u1507887→u316809 (54 veces, unidireccional). Entre los pares bidireccionales, el más equilibrado es u1188375↔u967506: se respondieron 40 y 38 veces respectivamente, una simetría casi perfecta que revela una relación de intercambio mutuo inusual en plataformas Q&amp;A donde los roles suelen estar separados.
+      </div>
+    </div>
+  </div>
+  <!-- Q7 -->
+  <div class="chart-card">
+    <div class="chart-title">Q7 · Usuarios bidireccionales — top-200 de respondedores ∩ top-200 de preguntadores</div>
+    <table class="dtbl">
+      <tr><th>Usuario</th><th>Respuestas elegidas (posición en ranking)</th><th>Preguntas formuladas (posición en ranking)</th><th>Actividad total combinada</th></tr>
+      <tr><td><strong>u26770</strong></td><td>787 (posición 6 en top respondedores)</td><td>148 (posición 19 en top preguntadores)</td><td>935</td></tr>
+      <tr><td><strong>u449978</strong></td><td>395 (posición 40 en top respondedores)</td><td>178 (posición 10 en top preguntadores)</td><td>573</td></tr>
+    </table>
+    <div class="callout">
+      <strong>Hallazgo:</strong> De todos los usuarios del dataset, solo 2 aparecen simultáneamente en el top-200 de respondedores y en el top-200 de preguntadores. Esto confirma que los roles de preguntador y respondedor están prácticamente separados: los usuarios que más responden apenas preguntan, y viceversa.
+    </div>
+  </div>
+</div>
+
+<!-- =============== B3 CROSS-CATEGORÍA =============== -->
+<div id="b3" class="section">
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Q11 · Respuestas fuera de la categoría dominante — top 50 respondedores<span>Porcentaje fuera de su categoría principal: rojo = alta movilidad, ámbar = media, azul = baja</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#993C1D"></span>Alta movilidad (&gt;40%)</span>
+        <span><span class="lsq" style="background:#BA7517"></span>Media (25-40%)</span>
+        <span><span class="lsq" style="background:#185FA5"></span>Baja (&lt;25%)</span>
+      </div>
+      <div class="chart-wrap" style="height:420px"><canvas id="c_q11"></canvas></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> El 20,03% de las respuestas de los top-50 se dan fuera de su categoría dominante, lo que indica que la red no está completamente compartimentada: hay usuarios que contribuyen activamente en múltiples áreas. En el extremo opuesto, u1375495 (segundo respondedor global con 1.210 respuestas) responde en Education el 99,9% del tiempo — solo 1 respuesta fuera de su área. Los tres especialistas puros (u854180, u1059985, u705727) tienen 0% fuera de su categoría.
+      </div>
+    </div>
+    <div>
+      <div class="chart-card" style="margin-bottom:1.1rem">
+        <div class="chart-title">Q12 · Top 10 subcategorías por número de respondedores únicos<span>Métrica absoluta de tamaño de comunidad (usuarios distintos) · no mide concentración relativa</span></div>
+        <div class="legend">
+          <span><span class="lsq" style="background:#185FA5"></span>Science</span>
+          <span><span class="lsq" style="background:#0F6E56"></span>Education</span>
+          <span><span class="lsq" style="background:#993C1D"></span>Social Science</span>
+          <span><span class="lsq" style="background:#533AB7"></span>Arts &amp; Humanities</span>
+        </div>
+        <div class="chart-wrap" style="height:220px"><canvas id="c_q12"></canvas></div>
+        <div class="callout">
+          <strong>Hallazgo:</strong> Homework Help (Education) lidera en volumen absoluto (23.199 respondedores únicos). Pero volumen no implica diversidad proporcional: su ratio respondedores/preguntas es 0,426. Esta métrica absoluta (Q12) se complementa con Q13, que ordena por ratio para medir concentración.
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Q13 · Top 15 subcategorías más "democráticas"<span>Métrica proporcional: ratio respondedores únicos/preguntas (min 500 preguntas)</span></div>
+        <div class="legend">
+          <span><span class="lsq" style="background:#993C1D"></span>Social Science</span>
+          <span><span class="lsq" style="background:#0F6E56"></span>Education</span>
+          <span><span class="lsq" style="background:#533AB7"></span>Arts &amp; Humanities</span>
+        </div>
+        <div class="chart-wrap" style="height:320px"><canvas id="c_q13"></canvas></div>
+        <div class="callout">
+          <strong>Hallazgo:</strong> Q13 confirma, con el top 15 completo, que volumen y diversidad no son equivalentes. Frente a Q12 (métrica absoluta de respondedores únicos), aquí domina una diversidad proporcional muy alta (0,771-0,855), con fuerte presencia de Social Science y Arts &amp; Humanities y aportes de Education. Esto indica baja concentración: muchas preguntas son respondidas por usuarios distintos. El contraste es claro con subcategorías masivas pero más concentradas como Mathematics (ratio 0,328 en Q12), donde el peso recae en un núcleo más estable de respondedores.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =============== B4 CALIDAD =============== -->
+<div id="b4" class="section">
+  <div class="grid-4">
+    <div class="qcard">
+      <div class="qval q-ok">0</div>
+      <div class="qlbl">Respuestas "fantasma" (Q15)</div>
+      <div class="qexp">Registros con best_id pero sin ninguna respuesta alternativa. En 609.381 preguntas con respuesta identificada, ninguna carece de respuestas alternativas.</div>
+    </div>
+    <div class="qcard">
+      <div class="qval q-ok">1</div>
+      <div class="qlbl">Inconsistencias temporales (Q16)</div>
+      <div class="qexp">Registros donde la fecha de resolución (res_date) es anterior a la fecha de creación (date). Hay 609.426 registros con ambas fechas presentes; solo 1 es inconsistente (Education &amp; Reference), por lo que para análisis temporales válidos se usan 609.425.</div>
+    </div>
+    <div class="qcard">
+      <div class="qval q-ok">0</div>
+      <div class="qlbl">Timestamps idénticos (Q17)</div>
+      <div class="qexp">Registros donde date = res_date exactamente (resolución instantánea, posibles datos sintéticos). Ninguno en los 609.425 registros temporales válidos.</div>
+    </div>
+    <div class="qcard">
+      <div class="qval q-warn">4.757</div>
+      <div class="qlbl">Código regional no estándar (Q18)</div>
+      <div class="qexp">Registros con qintl="e1" — código interno de Yahoo que no corresponde a ningún país ISO 3166-1. Representa el 0,78% del subset. Ver detalle abajo.</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Q14 · Porcentaje de campos obligatorios ausentes por categoría<span>Serie 1: sin id (azul claro). Serie 2: sin bestanswer/best_id (color por categoría: Science, Education, Social, Arts)</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#7EAED6"></span>Sin campo id (todas las categorías)</span>
+        <span><span class="lsq" style="background:#185FA5"></span>Sin bestanswer / best_id · Science</span>
+        <span><span class="lsq" style="background:#0F6E56"></span>Sin bestanswer / best_id · Education</span>
+        <span><span class="lsq" style="background:#993C1D"></span>Sin bestanswer / best_id · Social</span>
+        <span><span class="lsq" style="background:#533AB7"></span>Sin bestanswer / best_id · Arts</span>
+      </div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c_q14"></canvas></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> El campo <em>id</em> es prácticamente universal — menos del 0,01% de ausencia en todas las categorías. El problema principal está en <em>bestanswer</em> y <em>best_id</em> de Education &amp; Reference, donde el 1,47% de los registros (3.454 preguntas) no tiene respuesta elegida identificable. Esto puede indicar preguntas abiertas sin resolver o datos exportados antes de que se eligiese la mejor respuesta. El campo <em>nbestanswers</em> está presente en prácticamente el 100% de los registros.
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Q18 · El código de región "e1" — distribución por categoría<span>qintl = campo que indica la variante geográfica del idioma (ej. "us" = inglés de EE.UU., "br" = portugués de Brasil)</span></div>
+      <div class="chart-wrap" style="height:160px"><canvas id="c_q18bar"></canvas></div>
+      <table class="dtbl" style="margin-top:.6rem">
+        <tr><th>Combinación language</th><th>Registros</th><th>Significado</th></tr>
+        <tr><td><strong>es-e1</strong></td><td>4.756 (99,98%)</td><td>Español con región Yahoo interna</td></tr>
+        <tr><td>pt-e1</td><td>1 (0,02%)</td><td>Portugués con región Yahoo interna</td></tr>
+      </table>
+      <div class="callout">
+        <strong>Qué es "e1":</strong> El campo <em>qintl</em> indica la versión regional de la plataforma en la que se publicó la pregunta (por ejemplo "us" = Yahoo Answers EE.UU., "es" = España, "br" = Brasil). El código "e1" es un identificador interno de Yahoo que aparece en su versión de habla hispana no asignada a un país concreto. No corresponde a ningún código de país ISO 3166-1, lo que lo convierte en una anomalía estructural del sistema de Yahoo — no es un error en los datos. Aparece solo en preguntas en español (excepto 1 en portugués) y está ausente por completo en Science &amp; Mathematics, que es la categoría con menor participación hispanohablante en el subset.
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Resumen de calidad — cinco dimensiones evaluadas</div>
+    <div class="chart-wrap" style="height:130px"><canvas id="c_quality"></canvas></div>
+    <div class="callout">
+      <strong>Conclusión:</strong> El dataset presenta una calidad de datos excepcional. Los campos identificadores son prácticamente universales (&gt;99,99%). La única anomalía relevante es la ausencia de respuesta elegida en el 1,47% de Education &amp; Reference. El código "e1" (0,78%) es un artefacto del sistema de Yahoo, no un error en los datos.
+    </div>
+  </div>
+</div>
+
+<!-- =============== B5 TEMPORAL =============== -->
+<div id="b5" class="section">
+  <div class="chart-card">
+    <div class="chart-title">Q19 · Evolución mensual de preguntas (2005-2007)<span>Serie temporal derivada de timestamps Unix; la cobertura efectiva del extracto se concentra en 2006</span></div>
+    <div class="chart-wrap" style="height:270px"><canvas id="c_q19"></canvas></div>
+    <div class="callout">
+      <strong>Hallazgo:</strong> La plataforma pasa de 1 pregunta en julio de 2005 a 211.052 en noviembre de 2006 — el mes de mayor actividad de todo el dataset, donde las cuatro categorías alcanzan su pico simultáneamente. Destaca el gap entre junio y octubre de 2006 (solo 5.023 en octubre) que quiebra la tendencia ascendente, posiblemente relacionado con el momento de exportación del dataset o un cambio en la política de la plataforma. El dataset no cubre 2007 completo — los datos disponibles corresponden principalmente a 2006.
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Q21 · Tiempo medio de resolución en días<span>Tiempo transcurrido desde la publicación (date) hasta la elección de la mejor respuesta (res_date) · Global = promedio de las 4 categorías juntas</span></div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c_q21"></canvas></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> Social Science se resuelve en 14,46 días de media — las preguntas de opinión reciben respuesta rápida porque muchos usuarios tienen algo que aportar inmediatamente. Education &amp; Reference tarda 47,98 días — las preguntas de referencia académica específica pueden esperar semanas hasta que alguien con el conocimiento exacto responde. La media global es de 31,87 días.
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Q22 · Distribución de tiempos de resolución por categoría<span>Porcentaje de preguntas por rango temporal · Global = 609.425 registros válidos (date y res_date presentes y con res_date ≥ date)</span></div>
+      <div class="legend">
+        <span><span class="lsq" style="background:#1a3a5c"></span>&lt;1h</span>
+        <span><span class="lsq" style="background:#185FA5"></span>1h–24h</span>
+        <span><span class="lsq" style="background:#5B9AD5"></span>1–7 días</span>
+        <span><span class="lsq" style="background:#BA7517"></span>7–30 días</span>
+        <span><span class="lsq" style="background:#993C1D"></span>&gt;30 días</span>
+      </div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c_q22"></canvas></div>
+      <div class="callout">
+        <strong>Hallazgo:</strong> Social Science destaca con el 11,03% resuelto en las primeras 24 horas (frente al 4–5% de las otras categorías) y el 53,09% en 1–7 días — la más rápida. Education &amp; Reference tiene el mayor porcentaje de resoluciones tardías (24,58% tarda más de 30 días). En todas las categorías, el rango 1–7 días es el más frecuente.
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function show(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tabs button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+}
+
+const SCI='#185FA5',EDU='#0F6E56',SOC='#993C1D',ART='#533AB7',AMB='#BA7517';
+const font={family:'-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif',size:11};
+Chart.defaults.font=font;Chart.defaults.color='#666';
+const grid={color:'rgba(0,0,0,0.06)'};
+
+/* ── B0 DATASET PIE ── */
+new Chart('c_pie',{type:'doughnut',data:{
+  labels:['Science & Math  183.354','Education & Ref  234.604','Social Science  58.207','Arts & Hum.  137.080'],
+  datasets:[{data:[183354,234604,58207,137080],backgroundColor:[SCI,EDU,SOC,ART],borderWidth:0,hoverOffset:6}]
+},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+  plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12,padding:8}},
+  tooltip:{callbacks:{label:c=>`${c.label}: ${((c.parsed/613245)*100).toFixed(1)}%`}}}}});
+
+/* ── B0 LANG ── */
+new Chart('c_lang',{type:'doughnut',data:{
+  labels:['en — inglés  523.686','es — español  37.214','pt — portugués  18.999','fr — francés  18.326','de+it+otros  15.020'],
+  datasets:[{data:[523686,37214,18999,18326,15020],backgroundColor:[SCI,EDU,SOC,ART,AMB],borderWidth:0}]
+},options:{responsive:true,maintainAspectRatio:false,cutout:'52%',
+  plugins:{legend:{position:'right',labels:{font:{size:10.5},boxWidth:11,padding:7}},
+  tooltip:{callbacks:{label:c=>`${((c.parsed/613245)*100).toFixed(2)}% del subset`}}}}});
+
+/* ── B1 Q2 SUBCATS ── */
+const subs=[
+  ['Homework Help',54439,EDU],['Other - Education',38728,EDU],['Higher Education',34266,EDU],
+  ['Mathematics',29803,SCI],['Philosophy',23008,ART],['Books & Authors',22544,ART],
+  ['Biology',21191,SCI],['History',20494,ART],['Chemistry',20063,SCI],
+  ['Words & Wordplay',18826,EDU],['Physics',18635,SCI],['Psychology',16536,SOC],
+  ['Visual Arts',16434,ART],['Other - Science',15511,SCI],['Other - Arts',15445,ART]
+].reverse();
+new Chart('c_q2',{type:'bar',data:{
+  labels:subs.map(s=>s[0]),
+  datasets:[{data:subs.map(s=>s[1]),backgroundColor:subs.map(s=>s[2]),borderRadius:2}]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x.toLocaleString()} preguntas`}}},
+  scales:{x:{grid,ticks:{callback:v=>v>=1000?Math.round(v/1000)+'k':v}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}});
+
+/* ── B1 Q4 ── */
+new Chart('c_q4',{type:'bar',data:{
+  labels:['Science & Math','Education & Ref','Social Science','Arts & Humanities'],
+  datasets:[
+    {label:'Votada por la comunidad',data:[68.92,70.39,52.85,61.52],backgroundColor:[SCI,EDU,SOC,ART],stack:'s'},
+    {label:'Elegida por el autor',data:[31.08,29.61,47.15,38.48],backgroundColor:[SCI+'66',EDU+'66',SOC+'66',ART+'66'],stack:'s'}
+  ]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.x.toFixed(1)}%`}}},
+  scales:{x:{stacked:true,max:100,grid,ticks:{callback:v=>v+'%'}},y:{stacked:true,grid:{display:false}}}}});
+
+/* ── B2 Q5 ── */
+const rids=['u483503','u1375495','u1729248','u355509','u1694623','u26770','u893686','u278952','u353770','u1499243','u1495573','u1551571','u27241','u854180','u1123890','u1642854','u154815','u738948','u1202732','u1108774'].reverse();
+const rvals=[1822,1210,939,878,819,787,737,647,643,638,615,612,602,600,596,567,560,559,549,547].reverse();
+new Chart('c_q5',{type:'bar',data:{
+  labels:rids,
+  datasets:[{data:rvals,backgroundColor:rvals.map((_,i)=>i===rids.length-1?SCI:SCI+'66'),borderRadius:2}]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x.toLocaleString()} respuestas como mejor respuesta`}}},
+  scales:{x:{grid,ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+/* ── B2 Q9 ── */
+const q9u=['u483503','u1375495','u1729248','u355509','u1694623','u26770','u893686','u278952','u353770','u1499243'];
+const q9d={sci:[26,1,147,656,110,354,720,625,602,545],edu:[1755,1209,324,220,454,133,9,14,38,92],soc:[11,0,20,1,22,63,3,1,0,1],art:[30,0,448,1,233,237,5,7,3,0]};
+new Chart('c_q9',{type:'bar',data:{
+  labels:q9u,
+  datasets:[
+    {label:'Science & Math',data:q9d.sci,backgroundColor:SCI,stack:'s'},
+    {label:'Education & Ref',data:q9d.edu,backgroundColor:EDU,stack:'s'},
+    {label:'Social Science',data:q9d.soc,backgroundColor:SOC,stack:'s'},
+    {label:'Arts & Humanities',data:q9d.art,backgroundColor:ART,stack:'s'}
+  ]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{stacked:true,grid},y:{stacked:true,grid:{display:false},ticks:{font:{size:9.5}}}}}});
+
+/* ── B2 Q10 DONUT ── */
+new Chart('c_q10',{type:'doughnut',data:{
+  labels:['4 categorías (generalista) — 62%','3 categorías — 26%','2 categorías — 6%','1 categoría (especialista puro) — 6%'],
+  datasets:[{data:[31,13,3,3],backgroundColor:[SCI,'#5B9AD5','#9FC5E8',SOC],borderWidth:0}]
+},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+  plugins:{legend:{display:false},
+  tooltip:{callbacks:{label:c=>{const pct=((c.parsed/50)*100).toFixed(0);return ` ${c.label.split('—')[0].trim()}: ${c.parsed} usuarios (${pct}% del top-50)`;}}}}}});
+
+/* ── B2 Q8 SVG NETWORK (bigger, hoverable) ── */
+(()=>{
+  const svg=document.getElementById('svg_q8');
+  const tip=document.getElementById('q8_tooltip');
+  const nodes=[
+    {id:'u1507887',x:85,y:60,c:EDU},{id:'u316809',x:255,y:60,c:SCI},
+    {id:'u1744773',x:85,y:145,c:EDU},{id:'u354012',x:255,y:145,c:SCI},
+    {id:'u1188375',x:85,y:230,c:ART},{id:'u967506',x:255,y:230,c:ART},
+    {id:'u169196',x:325,y:60,c:SOC},{id:'u1020511',x:420,y:60,c:SOC},
+    {id:'u483503',x:345,y:170,c:SCI},
+  ];
+  const edges=[
+    {s:'u1507887',t:'u316809',w1:54,w2:null,bi:false},
+    {s:'u1744773',t:'u354012',w1:48,w2:28,bi:true},
+    {s:'u1188375',t:'u967506',w1:40,w2:38,bi:true},
+    {s:'u169196',t:'u1020511',w1:46,w2:35,bi:true},
+  ];
+  const nm={};nodes.forEach(n=>nm[n.id]=n);
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  [{id:'ag',c:'#888'},{id:'ab',c:SCI}].forEach(({id,c})=>{
+    const m=document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id',id);m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','7');
+    m.setAttribute('refX','5');m.setAttribute('refY','3.5');m.setAttribute('orient','auto');
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M0,0 L7,3.5 L0,7 Z');p.setAttribute('fill',c);m.appendChild(p);defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  edges.forEach(e=>{
+    const a=nm[e.s],b=nm[e.t];
+    const dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
+    const ux=dx/len,uy=dy/len;
+    const col=e.bi?SCI:'#888';const aid=e.bi?'ab':'ag';
+    const off=e.bi?4:0;
+    // forward arrow (offset perpendicular if bidirectional)
+    const px=-uy*off,py=ux*off;
+    const x1=a.x+ux*25+px,y1=a.y+uy*25+py;
+    const x2=b.x-ux*29+px,y2=b.y-uy*29+py;
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('stroke',col);l.setAttribute('stroke-width',e.bi?2:1.5);
+    if(!e.bi)l.setAttribute('stroke-dasharray','5,3');
+    l.setAttribute('marker-end',`url(#${aid})`);svg.appendChild(l);
+    // label forward
+    const lx=(a.x+b.x)/2+px,ly=(a.y+b.y)/2+py-5;
+    const t1=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x',lx);t1.setAttribute('y',ly);t1.setAttribute('font-size','9.5');
+    t1.setAttribute('text-anchor','middle');t1.setAttribute('fill',col);t1.setAttribute('font-weight','600');
+    t1.textContent=`${e.w1}×`;svg.appendChild(t1);
+
+    if(e.bi&&e.w2){
+      const x1b=b.x-ux*25-px,y1b=b.y-uy*25-py;
+      const x2b=a.x+ux*29-px,y2b=a.y+uy*29-py;
+      const l2=document.createElementNS('http://www.w3.org/2000/svg','line');
+      l2.setAttribute('x1',x1b);l2.setAttribute('y1',y1b);l2.setAttribute('x2',x2b);l2.setAttribute('y2',y2b);
+      l2.setAttribute('stroke',col);l2.setAttribute('stroke-width',1.5);
+      l2.setAttribute('marker-end',`url(#${aid})`);svg.appendChild(l2);
+      const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t2.setAttribute('x',(b.x+a.x)/2-px);t2.setAttribute('y',(b.y+a.y)/2-py+13);
+      t2.setAttribute('font-size','9.5');t2.setAttribute('text-anchor','middle');
+      t2.setAttribute('fill',col);t2.setAttribute('font-weight','600');
+      t2.textContent=`${e.w2}×`;svg.appendChild(t2);
+    }
+  });
+
+  nodes.forEach(n=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor='pointer';
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r',23);
+    c.setAttribute('fill',n.c+'22');c.setAttribute('stroke',n.c);c.setAttribute('stroke-width','1.8');
+    g.appendChild(c);
+    const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+    tx.setAttribute('x',n.x);tx.setAttribute('y',n.y+4);tx.setAttribute('font-size','8.5');
+    tx.setAttribute('text-anchor','middle');tx.setAttribute('fill',n.c);tx.setAttribute('font-weight','700');
+    tx.textContent=n.id;g.appendChild(tx);
+    g.addEventListener('mouseenter',ev=>{tip.style.display='block';tip.textContent=n.id;});
+    g.addEventListener('mousemove',ev=>{tip.style.left=(ev.clientX+12)+'px';tip.style.top=(ev.clientY-8)+'px';});
+    g.addEventListener('mouseleave',()=>{tip.style.display='none';});
+    svg.appendChild(g);
+  });
+
+  // legend
+  [{c:SCI,l:'Bidireccional'},{c:'#888',l:'Unidireccional (- - -)'}].forEach(({c,l},i)=>{
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x','295');r.setAttribute('y',205+i*17);r.setAttribute('width','14');r.setAttribute('height','2.5');r.setAttribute('fill',c);svg.appendChild(r);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x','314');t.setAttribute('y',210+i*17);t.setAttribute('font-size','9.5');t.setAttribute('fill','#666');t.textContent=l;svg.appendChild(t);
+  });
+})();
+
+/* ── B3 Q11 ── */
+const q11=[
+  {id:'u449978',pct:61.3},{id:'u1508926',pct:56.4},{id:'u1727389',pct:56.1},
+  {id:'u738948',pct:56.2},{id:'u26770',pct:55.0},{id:'u1729248',pct:52.3},
+  {id:'u649422',pct:51.0},{id:'u1694623',pct:44.6},{id:'u1642854',pct:42.0},
+  {id:'u586959',pct:42.0},{id:'u355509',pct:25.3},{id:'u27241',pct:24.4},
+  {id:'u1502951',pct:27.9},{id:'u127797',pct:33.1},{id:'u1108774',pct:20.3},
+  {id:'u1375495',pct:0.1},{id:'u854180',pct:0.0}
+].sort((a,b)=>a.pct-b.pct);
+new Chart('c_q11',{type:'bar',data:{
+  labels:q11.map(d=>d.id),
+  datasets:[{data:q11.map(d=>d.pct),
+    backgroundColor:q11.map(d=>d.pct>40?SOC:d.pct>25?AMB:SCI),borderRadius:2}]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x.toFixed(1)}% de respuestas fuera de su categoría dominante`}}},
+  scales:{x:{max:70,grid,ticks:{callback:v=>v+'%'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+/* ── B3 Q12 ── */
+const q12=[
+  {n:'Homework Help',u:23199,c:EDU},{n:'Other - Education',u:21827,c:EDU},
+  {n:'Higher Education',u:17339,c:EDU},{n:'Philosophy',u:11944,c:ART},
+  {n:'Books & Authors',u:11099,c:ART},{n:'Words & Wordplay',u:10635,c:EDU},
+  {n:'Other - Arts',u:10468,c:ART},{n:'Psychology',u:9970,c:SOC},
+  {n:'Mathematics',u:9788,c:SCI},{n:'Primary & Sec. Ed.',u:9586,c:EDU}
+].reverse();
+new Chart('c_q12',{type:'bar',data:{
+  labels:q12.map(s=>s.n),
+  datasets:[{data:q12.map(s=>s.u),backgroundColor:q12.map(s=>s.c),borderRadius:2}]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x.toLocaleString()} respondedores únicos`}}},
+  scales:{x:{grid,ticks:{callback:v=>Math.round(v/1000)+'k'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+/* ── B3 Q13 ── */
+const q13=[
+  {n:'Antropología',r:0.855,c:SOC},{n:'Enseignement - Divers',r:0.845,c:EDU},
+  {n:'Biologie',r:0.824,c:EDU},{n:'Otras - Arte y Humanidades',r:0.810,c:ART},
+  {n:'Sciences sociales - Divers',r:0.809,c:SOC},{n:'Arte e cultura - Altro',r:0.797,c:ART},
+  {n:"Gender & Women's Studies",r:0.797,c:SOC},{n:'Arts et sciences humaines - Divers',r:0.792,c:ART},
+  {n:'Anthropology',r:0.780,c:SOC},{n:'Sociologie',r:0.778,c:SOC},
+  {n:'Scienze sociali - Altro',r:0.777,c:SOC},{n:'Otros - Ciencias Sociales',r:0.776,c:SOC},
+  {n:'Home Schooling',r:0.775,c:EDU},{n:'Quotations',r:0.773,c:ART},
+  {n:'Sociologia',r:0.771,c:SOC}
+].reverse();
+new Chart('c_q13',{type:'bar',data:{
+  labels:q13.map(s=>s.n),
+  datasets:[{data:q13.map(s=>s.r),backgroundColor:q13.map(s=>s.c),borderRadius:2}]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ratio diversidad: ${c.parsed.x.toFixed(3)}`}}},
+  scales:{x:{min:0.76,max:0.86,grid,ticks:{callback:v=>v.toFixed(2)}},y:{grid:{display:false},ticks:{font:{size:9.5}}}}}});
+
+/* ── B4 Q14 GROUPED ── */
+new Chart('c_q14',{type:'bar',data:{
+  labels:['Science & Math','Education & Ref','Social Science','Arts & Humanities'],
+  datasets:[
+    {label:'Sin id (%)',data:[0.010,0.003,0.002,0.008],backgroundColor:'#7EAED6',borderRadius:2},
+    {label:'Sin bestanswer / best_id (%)',data:[0.01,1.47,0.60,0.03],backgroundColor:[SCI,EDU,SOC,ART],borderRadius:2},
+  ]
+},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{font:{size:11},boxWidth:12,padding:8}},
+  tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(3)}%`}}},
+  scales:{y:{grid,ticks:{callback:v=>v+'%'},title:{display:true,text:'% de registros con el campo ausente',font:{size:10}}},
+  x:{grid:{display:false}}}}});
+
+/* ── B4 Q18 BAR ── */
+new Chart('c_q18bar',{type:'bar',data:{
+  labels:['Arts & Humanities','Education & Ref','Social Science','Science & Math'],
+  datasets:[{data:[1733,1537,1487,0],backgroundColor:[ART,EDU,SOC,SCI+'44'],borderRadius:3}]
+},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y.toLocaleString()} registros con qintl="e1"`}}},
+  scales:{y:{grid,ticks:{stepSize:500}},x:{grid:{display:false}}}}});
+
+/* ── B4 QUALITY BAR ── */
+new Chart('c_quality',{type:'bar',data:{
+  labels:['Integridad del campo id','Presencia bestanswer/best_id','Coherencia temporal (res_date ≥ date)','Timestamps no sintéticos (date ≠ res_date)','Estándar de región (qintl)'],
+  datasets:[{data:[99.993,98.80,99.9998,100,99.22],
+    backgroundColor:['#0F6E56','#BA7517','#0F6E56','#0F6E56','#BA7517'],borderRadius:4}]
+},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x.toFixed(3)}% de registros correctos`}}},
+  scales:{x:{min:97,max:100.3,grid,ticks:{callback:v=>v+'%'}},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}});
+
+/* ── B5 Q19 LINE ── */
+const months=[
+  {a:2005,m:7,p:1},{a:2005,m:8,p:37},{a:2005,m:9,p:30},{a:2005,m:10,p:14},
+  {a:2005,m:11,p:176},{a:2005,m:12,p:10062},
+  {a:2006,m:1,p:21714},{a:2006,m:2,p:41370},{a:2006,m:3,p:50262},{a:2006,m:4,p:87538},
+  {a:2006,m:5,p:92162},{a:2006,m:6,p:93804},
+  {a:2006,m:10,p:5023},{a:2006,m:11,p:211052}
+];
+new Chart('c_q19',{type:'line',data:{
+  labels:months.map(m=>`${m.a}-${String(m.m).padStart(2,'0')}`),
+  datasets:[{data:months.map(m=>m.p),borderColor:SCI,backgroundColor:SCI+'20',fill:true,tension:.35,pointRadius:5,pointHoverRadius:7}]
+},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},
+  tooltip:{callbacks:{label:c=>` ${c.parsed.y.toLocaleString()} preguntas en ese mes`,title:t=>`Mes: ${t[0].label}`}}},
+  scales:{y:{grid,ticks:{callback:v=>v>=1000?Math.round(v/1000)+'k':v}},x:{grid,ticks:{maxRotation:45}}}}});
+
+/* ── B5 Q21 ── */
+new Chart('c_q21',{type:'bar',data:{
+  labels:['Global\n(todas las categorías)','Science &\nMathematics','Education &\nReference','Social\nScience','Arts &\nHumanities'],
+  datasets:[{data:[31.87,24.73,47.98,14.46,21.61],backgroundColor:['#888',SCI,EDU,SOC,ART],borderRadius:4}]
+},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y} días de media`}}},
+  scales:{y:{grid,ticks:{callback:v=>v+' días'},title:{display:true,text:'Días de media',font:{size:10}}},
+  x:{grid:{display:false}}}}});
+
+/* ── B5 Q22 ── */
+new Chart('c_q22',{type:'bar',data:{
+  labels:['Global','Science','Education','Social','Arts'],
+  datasets:[
+    {label:'< 1 hora',data:[0.19,0.27,0.21,0.02,0.12],backgroundColor:'#1a3a5c',stack:'s'},
+    {label:'1h – 24h',data:[5.09,4.47,4.02,11.03,5.22],backgroundColor:SCI,stack:'s'},
+    {label:'1 – 7 días',data:[39.45,37.82,34.67,53.09,43.93],backgroundColor:'#5B9AD5',stack:'s'},
+    {label:'7 – 30 días',data:[35.79,37.83,36.53,27.73,35.23],backgroundColor:AMB,stack:'s'},
+    {label:'> 30 días',data:[19.48,19.61,24.58,8.12,15.50],backgroundColor:SOC,stack:'s'},
+  ]
+},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},
+  tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(2)}%`}}},
+  scales:{y:{stacked:true,max:100,grid,ticks:{callback:v=>v+'%'}},x:{stacked:true,grid:{display:false}}}}});
+</script>
+</body>
+</html>

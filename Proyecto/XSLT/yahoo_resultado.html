@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yahoo! Answers — Knowledge Archive 2007</title>
+<style>
+          *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+          :root{
+            --bg:#f4f6fb;
+            --white:#ffffff;
+            --surface:#f9fafd;
+            --border:#e2e8f0;
+            --text:#1a202c;
+            --muted:#718096;
+            --light:#edf2f7;
+            --sci:#0077cc;
+            --sci-light:#e6f2ff;
+            --edu:#00875a;
+            --edu-light:#e3fcef;
+            --soc:#c05621;
+            --soc-light:#fff5eb;
+            --art:#6b46c1;
+            --art-light:#faf5ff;
+            --gold:#b7791f;
+            --gold-light:#fffbeb;
+            --radius:12px;
+            --shadow:0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
+            --shadow-hover:0 4px 12px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.06);
+            --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+            --font-mono:'SFMono-Regular','Consolas','Courier New',monospace;
+          }
+          html{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6}
+          body{min-height:100vh}
+
+          /* CHECKBOXES OCULTOS */
+          .fcb{display:none}
+
+          /* HEADER */
+          header{
+            background:var(--white);
+            border-bottom:1px solid var(--border);
+            padding:40px 48px 32px;
+            box-shadow:0 1px 3px rgba(0,0,0,.06);
+          }
+          .header-inner{max-width:1400px;margin:0 auto}
+          .header-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px}
+          .brand{}
+          .brand h1{
+            font-size:1.75rem;font-weight:800;letter-spacing:-0.5px;
+            color:var(--text);
+          }
+          .brand h1 span{color:var(--sci)}
+          .brand p{font-size:.8rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;font-family:var(--font-mono)}
+          .header-meta{
+            font-family:var(--font-mono);font-size:.72rem;color:var(--muted);
+            background:var(--light);padding:8px 14px;border-radius:6px;
+            border:1px solid var(--border);align-self:flex-start;line-height:1.8;
+          }
+
+          /* STATS */
+          .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:28px}
+          .stat-card{
+            background:var(--white);border:1px solid var(--border);
+            border-radius:10px;padding:14px 16px;text-align:center;
+            transition:transform .15s,box-shadow .15s;
+          }
+          .stat-card:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+          .stat-number{font-family:var(--font-mono);font-size:1.6rem;font-weight:700;display:block;line-height:1}
+          .stat-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:5px;display:block}
+          .stat-card.sci .stat-number{color:var(--sci)}
+          .stat-card.edu .stat-number{color:var(--edu)}
+          .stat-card.soc .stat-number{color:var(--soc)}
+          .stat-card.art .stat-number{color:var(--art)}
+          .stat-card.total .stat-number{color:var(--text)}
+          .stat-card.sci{border-top:3px solid var(--sci)}
+          .stat-card.edu{border-top:3px solid var(--edu)}
+          .stat-card.soc{border-top:3px solid var(--soc)}
+          .stat-card.art{border-top:3px solid var(--art)}
+
+          /* FILTROS */
+          .filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+          .filter-label-txt{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-right:4px;font-family:var(--font-mono)}
+          .filter-btn{
+            font-family:var(--font-mono);font-size:.72rem;letter-spacing:.5px;
+            text-transform:uppercase;padding:6px 14px;border-radius:20px;
+            cursor:pointer;border:1.5px solid;transition:all .2s;
+            user-select:none;display:inline-block;font-weight:500;
+          }
+          .filter-btn.sci{color:var(--sci);border-color:var(--sci);background:var(--sci-light)}
+          .filter-btn.edu{color:var(--edu);border-color:var(--edu);background:var(--edu-light)}
+          .filter-btn.soc{color:var(--soc);border-color:var(--soc);background:var(--soc-light)}
+          .filter-btn.art{color:var(--art);border-color:var(--art);background:var(--art-light)}
+          .filter-btn:hover{opacity:.8}
+
+          #fsci:not(:checked) ~ header .filter-btn.sci{background:var(--white);opacity:.5}
+          #fedu:not(:checked) ~ header .filter-btn.edu{background:var(--white);opacity:.5}
+          #fsoc:not(:checked) ~ header .filter-btn.soc{background:var(--white);opacity:.5}
+          #fart:not(:checked) ~ header .filter-btn.art{background:var(--white);opacity:.5}
+
+          /* LOGICA FILTRADO */
+          #fsci:not(:checked) ~ main .card-sci{display:none}
+          #fedu:not(:checked) ~ main .card-edu{display:none}
+          #fsoc:not(:checked) ~ main .card-soc{display:none}
+          #fart:not(:checked) ~ main .card-art{display:none}
+
+          /* GRID */
+          main{
+            max-width:1400px;margin:32px auto;padding:0 48px 48px;
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(420px,1fr));
+            gap:20px;
+          }
+
+          /* TARJETA */
+          .card{
+            background:var(--white);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            padding:0;
+            display:flex;flex-direction:column;
+            box-shadow:var(--shadow);
+            transition:transform .2s,box-shadow .2s;
+            overflow:hidden;
+          }
+          .card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+
+          /* BARRA COLOR SUPERIOR POR CATEGORIA */
+          .card-sci .card-stripe{background:var(--sci)}
+          .card-edu .card-stripe{background:var(--edu)}
+          .card-soc .card-stripe{background:var(--soc)}
+          .card-art .card-stripe{background:var(--art)}
+          .card-stripe{height:4px}
+
+          .card-body{padding:20px;display:flex;flex-direction:column;gap:12px;flex:1}
+
+          /* CABECERA TARJETA */
+          .card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+          .badge{
+            font-family:var(--font-mono);font-size:.65rem;text-transform:uppercase;
+            letter-spacing:1px;padding:3px 10px;border-radius:20px;font-weight:600;
+            white-space:nowrap;
+          }
+          .badge-sci{color:var(--sci);background:var(--sci-light);border:1px solid #bee3f8}
+          .badge-edu{color:var(--edu);background:var(--edu-light);border:1px solid #c6f6d5}
+          .badge-soc{color:var(--soc);background:var(--soc-light);border:1px solid #fed7aa}
+          .badge-art{color:var(--art);background:var(--art-light);border:1px solid #e9d8fd}
+          .lang-badge{
+            font-family:var(--font-mono);font-size:.68rem;color:var(--muted);
+            background:var(--light);padding:3px 8px;border-radius:4px;white-space:nowrap;
+          }
+          .subcat{font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+          .question{font-size:1rem;font-weight:700;color:var(--text);line-height:1.4}
+          .content-text{
+            font-size:.85rem;color:var(--muted);line-height:1.55;
+            border-left:3px solid var(--border);padding-left:10px;
+            font-style:italic;
+          }
+
+          /* MEJOR RESPUESTA */
+          .best-answer{
+            border-radius:8px;padding:12px 14px;
+            border:1px solid;
+          }
+          .card-sci .best-answer{background:var(--sci-light);border-color:#bee3f8}
+          .card-edu .best-answer{background:var(--edu-light);border-color:#c6f6d5}
+          .card-soc .best-answer{background:var(--soc-light);border-color:#fed7aa}
+          .card-art .best-answer{background:var(--art-light);border-color:#e9d8fd}
+          .best-answer-label{
+            font-family:var(--font-mono);font-size:.67rem;text-transform:uppercase;
+            letter-spacing:1px;margin-bottom:6px;font-weight:600;
+          }
+          .card-sci .best-answer-label{color:var(--sci)}
+          .card-edu .best-answer-label{color:var(--edu)}
+          .card-soc .best-answer-label{color:var(--soc)}
+          .card-art .best-answer-label{color:var(--art)}
+          .best-answer-text{font-size:.84rem;color:var(--text);line-height:1.55}
+
+          /* RESPUESTAS ALTERNATIVAS */
+          details.alt{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+          details.alt summary{
+            font-family:var(--font-mono);font-size:.72rem;color:var(--muted);
+            padding:9px 13px;cursor:pointer;list-style:none;user-select:none;
+            background:var(--surface);transition:background .15s;
+          }
+          details.alt summary::-webkit-details-marker{display:none}
+          details.alt[open] summary,details.alt summary:hover{background:var(--light);color:var(--text)}
+          .alt-item{
+            font-size:.82rem;color:#4a5568;line-height:1.5;
+            padding:9px 13px;border-top:1px solid var(--border);
+          }
+          .alt-n{
+            font-family:var(--font-mono);font-size:.63rem;color:var(--muted);
+            margin-right:6px;background:var(--light);padding:1px 5px;border-radius:3px;
+          }
+
+          /* PIE TARJETA */
+          .card-footer{
+            padding:12px 20px;
+            border-top:1px solid var(--border);
+            display:flex;justify-content:space-between;align-items:center;
+            gap:8px;flex-wrap:wrap;background:var(--surface);
+          }
+          .dates{display:flex;flex-direction:column;gap:2px}
+          .date-item{font-family:var(--font-mono);font-size:.65rem;color:var(--muted)}
+          .meta-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+          .voted-badge{
+            font-family:var(--font-mono);font-size:.63rem;color:var(--gold);
+            background:var(--gold-light);border:1px solid #f6d860;
+            padding:2px 8px;border-radius:4px;white-space:nowrap;font-weight:600;
+          }
+          .author-badge{
+            font-family:var(--font-mono);font-size:.63rem;color:var(--muted);
+            background:var(--light);border:1px solid var(--border);
+            padding:2px 8px;border-radius:4px;white-space:nowrap;
+          }
+          .author-id{
+            font-family:var(--font-mono);font-size:.65rem;color:var(--muted);
+            background:var(--light);border:1px solid var(--border);
+            padding:2px 7px;border-radius:4px;
+          }
+          .uri-badge{
+            font-family:var(--font-mono);font-size:.62rem;color:#a0aec0;
+            background:var(--light);border:1px solid var(--border);
+            padding:2px 7px;border-radius:4px;
+          }
+
+          /* FOOTER GLOBAL */
+          footer{
+            text-align:center;padding:28px 48px;
+            font-family:var(--font-mono);font-size:.68rem;color:var(--muted);
+            border-top:1px solid var(--border);background:var(--white);
+            letter-spacing:.5px;
+          }
+          ::-webkit-scrollbar{width:6px}
+          ::-webkit-scrollbar-track{background:var(--bg)}
+          ::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:3px}
+        </style>
+</head>
+<body>
+<input type="checkbox" id="fsci" class="fcb" checked><input type="checkbox" id="fedu" class="fcb" checked><input type="checkbox" id="fsoc" class="fcb" checked><input type="checkbox" id="fart" class="fcb" checked><header><div class="header-inner">
+<div class="header-top">
+<div class="brand">
+<h1>Yahoo! <span>Answers</span>
+</h1>
+<p>Knowledge Archive · October 2007 · BBDD Avanzadas · UCLM</p>
+</div>
+<div class="header-meta">
+                Dataset: FullOct2007 · 4.483.032 records total
+
+                Subset: 4 categories · 613.245 questions
+
+                Sample: 22 questions displayed
+              </div>
+</div>
+<div class="stats-grid">
+<div class="stat-card total">
+<span class="stat-number">22</span><span class="stat-label">Total questions</span>
+</div>
+<div class="stat-card sci">
+<span class="stat-number">6</span><span class="stat-label">Science &amp; Math</span>
+</div>
+<div class="stat-card edu">
+<span class="stat-number">6</span><span class="stat-label">Education &amp; Ref</span>
+</div>
+<div class="stat-card soc">
+<span class="stat-number">4</span><span class="stat-label">Social Science</span>
+</div>
+<div class="stat-card art">
+<span class="stat-number">6</span><span class="stat-label">Arts &amp; Humanities</span>
+</div>
+<div class="stat-card total">
+<span class="stat-number">7</span><span class="stat-label">Community voted</span>
+</div>
+<div class="stat-card total">
+<span class="stat-number">2</span><span class="stat-label">No content field</span>
+</div>
+</div>
+<div class="filter-row">
+<span class="filter-label-txt">Filter by category:</span><label for="fsci" class="filter-btn sci">▪ Science &amp; Math</label><label for="fedu" class="filter-btn edu">▪ Education &amp; Ref</label><label for="fsoc" class="filter-btn soc">▪ Social Science</label><label for="fart" class="filter-btn art">▪ Arts &amp; Humanities</label>
+</div>
+</div></header><main><article class="card card-sci"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-sci">⚙ Science &amp; Mathematics</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Biology</div>
+<h2 class="question">Why do people blush when they are embarrassed?</h2>
+<p class="content-text">Why do people blush when they are embarrassed?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">from ask yahoo...&lt;br /&gt;
+&lt;br /&gt;
+http://ask.yahoo.com/ask/20040113.html&lt;br /&gt;
+&lt;br /&gt;
+&lt;&lt;Blushing is a unique blend of evolutionary and social behavior. It's an involuntary reaction of the sympathetic nervous system, which is responsible for our "fight or flight" response, but blushing is solely triggered by social cues. &lt;br /&gt;
+People generally blush when they're feeling embarrassed, scared, or stressed. As a result of the "fight or flight" response, the capillaries that carry blood to the skin widen, and the increased blood flow lends the face, as well as sometimes the chest, neck, or even the body or legs, a reddened color. &lt;br /&gt;
+&lt;br /&gt;
+Excessive facial blushing, or erythrophobia, is caused by overactivity of the sympathetic nervous system. The condition can cause a lot of psychological duress and has engendered several support groups. &lt;br /&gt;
+&lt;br /&gt;
+It's common knowledge that animals don't blush. So while there are some evolutionary cues behind blushing, it's also linked to something uniquely human -- moral consciousness.&gt;&gt;</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>from ask yahoo...&lt;br /&gt;
+&lt;br /&gt;
+http://ask.yahoo.com/ask/20040113.html&lt;br /&gt;
+&lt;br /&gt;
+&lt;&lt;Blushing is a unique blend of evolutionary and social behavior. It's an involuntary reaction of the sympathetic nervous system, which is responsible for our "fight or flight" response, but blushing is solely triggered by social cues. &lt;br /&gt;
+People generally blush when they're feeling embarrassed, scared, or stressed. As a result of the "fight or flight" response, the capillaries that carry blood to the skin widen, and the increased blood flow lends the face, as well as sometimes the chest, neck, or even the body or legs, a reddened color. &lt;br /&gt;
+&lt;br /&gt;
+Excessive facial blushing, or erythrophobia, is caused by overactivity of the sympathetic nervous system. The condition can cause a lot of psychological duress and has engendered several support groups. &lt;br /&gt;
+&lt;br /&gt;
+It's common knowledge that animals don't blush. So while there are some evolutionary cues behind blushing, it's also linked to something uniquely human -- moral consciousness.&gt;&gt;</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            7 Jul 2005</span><span class="date-item">
+              ✓ Resolved:
+              10 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u1254780</span><span class="uri-badge">#4189466</span>
+</div>
+</div></article><article class="card card-sci"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-sci">⚙ Science &amp; Mathematics</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Biology</div>
+<h2 class="question">How the human species evolved?</h2>
+<p class="content-text">How the human species evolved?</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">A tough question as it overlaps science and theology. Since you asked "how the human species evolved?" I'll assume you're interested in the scientific approach to the answer.&lt;br /&gt;
+&lt;br /&gt;
+The current theory holds that Homo sapiens evolved from Hominid ancestors over the course of millions of years through a process called natural selection. Natural selection is the weeding and advancement of species variants over time based on the fit in that species' then current environments. The pressures for "fit" are competitive (with each other, with other tribes, and with other animals) and environmental (weather, terrain, availability of food, etc.). These factors all contributed to the development of our higher brain, which we now use to evolve as a global collective through communication &amp; technology.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>A tough question as it overlaps science and theology. Since you asked "how the human species evolved?" I'll assume you're interested in the scientific approach to the answer.&lt;br /&gt;
+&lt;br /&gt;
+The current theory holds that Homo sapiens evolved from Hominid ancestors over the course of millions of years through a process called natural selection. Natural selection is the weeding and advancement of species variants over time based on the fit in that species' then current environments. The pressures for "fit" are competitive (with each other, with other tribes, and with other animals) and environmental (weather, terrain, availability of food, etc.). These factors all contributed to the development of our higher brain, which we now use to evolve as a global collective through communication &amp; technology.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Here's a small, quick answer to your big question, from http://www.onelife.com/evolve/manev.html:&lt;br /&gt;
+&lt;br /&gt;
+SPECIES/TIME PERIOD IN YEARS AGO&lt;br /&gt;
+Ardipithicus ramidus/5 to 4 million years ago&lt;br /&gt;
+Australopithecus anamensis/4.2 to 3.9 million &lt;br /&gt;
+Australopithecus afarensis/4 to 2.7 million &lt;br /&gt;
+Australopithecus africanus/3 to 2 million &lt;br /&gt;
+Australopithecus robustus/2.2 to 1.6 million &lt;br /&gt;
+Homo habilis/2.2 to 1.6 million &lt;br /&gt;
+Homo erectus/2.0 to 0.4 million &lt;br /&gt;
+Homo sapiens archaic/400 to 200 thousand &lt;br /&gt;
+Homo sapiens neandertalensis/200 to 30 thousand &lt;br /&gt;
+Homo sapiens sapiens/200 thousand &lt;br /&gt;
+&lt;br /&gt;
+Because this is such a big question, I will suggest what I find to be an excellent resource so you can find the information you are seeking. I think it's excellent because it answers this large question fairly concisely, and also defines tangential issues, such as how natural selection works. It's the site referenced above, http://www.onelife.com/evolve/manev.html</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Sep 2005</span><span class="date-item">
+              ✓ Resolved:
+              4 Oct 2005</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u143603</span><span class="uri-badge">#1251537</span>
+</div>
+</div></article><article class="card card-sci"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-sci">⚙ Science &amp; Mathematics</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Mathematics</div>
+<h2 class="question">What is an "imaginary number"?</h2>
+<p class="content-text">What is an "imaginary number", and how is it treated in algebra equations?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">Imaginary numbers are numbers than when squared equal a negative number, as in i^2 = -1, where i is the imaginary number. You'll also often see them represented as i = √-1 (that's the square root of -1).&lt;br /&gt;
+&lt;br /&gt;
+Don't be confused by the poorly chosen name - imaginary numbers do indeed exist and are used in advanced math, such as in the physics of electromagnetic fields. The analogy that Wikipedia uses is a good one - just like you don't need the concept of fractions to count stones, it doesn't mean that fractions don't exist. :)</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Imaginary numbers are numbers than when squared equal a negative number, as in i^2 = -1, where i is the imaginary number. You'll also often see them represented as i = √-1 (that's the square root of -1).&lt;br /&gt;
+&lt;br /&gt;
+Don't be confused by the poorly chosen name - imaginary numbers do indeed exist and are used in advanced math, such as in the physics of electromagnetic fields. The analogy that Wikipedia uses is a good one - just like you don't need the concept of fractions to count stones, it doesn't mean that fractions don't exist. :)</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              26 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u1372188</span><span class="uri-badge">#1568482</span>
+</div>
+</div></article><article class="card card-sci"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-sci">⚙ Science &amp; Mathematics</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Physics</div>
+<h2 class="question">Faxing a pizza</h2>
+<p class="content-text">would we be able to fax a pizza in the future? How far are we from creating a machine that can beam people from one place to another?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">We're pretty far away from being able to beam anything in the way that you are describing.  There are some experiments where splitting entangled electrons allows us to observe some interesting 'action at a distance' effects, but the amount of data that would need to be stored to transmit something with as many atoms as a pizza is incredible.  Also, such an operation would require nano-assemblers that could interpret such data an reassemble the pizza from the info provided.</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>We're pretty far away from being able to beam anything in the way that you are describing.  There are some experiments where splitting entangled electrons allows us to observe some interesting 'action at a distance' effects, but the amount of data that would need to be stored to transmit something with as many atoms as a pizza is incredible.  Also, such an operation would require nano-assemblers that could interpret such data an reassemble the pizza from the info provided.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            3 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              17 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u605834</span><span class="uri-badge">#2070304</span>
+</div>
+</div></article><article class="card card-sci"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-sci">⚙ Science &amp; Mathematics</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Astronomy &amp; Space</div>
+<h2 class="question">space missions</h2>
+<p class="content-text">Why are we spending so much money on space when we do not have a decent health insurance to all the public?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">You also need to consider the economic effects of funding basic research.  The moon missions of the 60's inspired an entire generation and helped to move many kids toward careers in science and engineering.  As a result, the US was well poised to take advantage of the huge boom in information technology in the last few decades.  The net effect of these engineers in the workforce could be see has a pretty impressive return on investment for the cost of those missions.</div>
+</div>
+<details class="alt"><summary>
+              💬 3 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>You also need to consider the economic effects of funding basic research.  The moon missions of the 60's inspired an entire generation and helped to move many kids toward careers in science and engineering.  As a result, the US was well poised to take advantage of the huge boom in information technology in the last few decades.  The net effect of these engineers in the workforce could be see has a pretty impressive return on investment for the cost of those missions.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>in 2006 the US plans to spend $16BN on NASA vs. $640BN on health. this is out of a $2.57TRN budget.&lt;br /&gt;
+&lt;br /&gt;
+definitely non negligible.&lt;br /&gt;
+&lt;br /&gt;
+whether or not this is too much is a matter of opinion.&lt;br /&gt;
+&lt;br /&gt;
+BTW the cost of the war in iraq is estimated at $120-$200BN. how does that match to NASA in terms of good for humanity?</div>
+<div class="alt-item">
+<span class="alt-n">#3</span>"so much" money depends on one's perspective. One can argue why does the US spend so much money on defense when Soviet threat is gone? Fighting terrorism doesn't need nuclear weapons.  &lt;br /&gt;
+&lt;br /&gt;
+Spending some money on basic research like space missions is important since the US is the richest, most technologically advanced nation in the world.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            9 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              15 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u484353</span><span class="uri-badge">#3877868</span>
+</div>
+</div></article><article class="card card-sci"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-sci">⚙ Science &amp; Mathematics</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Physics</div>
+<h2 class="question">How a black hole is formed?</h2>
+<p class="content-text">I would like to know how a black hole can possibly be formed. Are there any experimental evidence of such creation?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">The current scientific theory holds that black holes are formed when stars of sufficient mass (about 3x the mass of our Sun) reach the end of their life and collapse down into a singularity, which is, in essence, an infinitely small point with a huge amount of gravity - gravity so powerful that not even light can escape it's pull if it gets too close. It is also thought that black holes can be formed from smaller masses if external energy/pressure is exerted to squeeze the mass into a singularity.&lt;br /&gt;
+&lt;br /&gt;
+Not sure if there's any direct experimental evidence of creation, but there is evidence that they exist. Cosmologists use several different methods to detect blacks holes, such as by looking for light being bent and/or disappearing as it travels from remote stars towards us, and also by looking for bursts of x-rays that are given off as matter is sucked into the back hole and destroyed.&lt;br /&gt;
+&lt;br /&gt;
+Fun fact: current evidence and theory suggests that the center of the Milky Way is a giant black hole that was formed as the densly packed stars in the center collapsed and sucked each other in.</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>The current scientific theory holds that black holes are formed when stars of sufficient mass (about 3x the mass of our Sun) reach the end of their life and collapse down into a singularity, which is, in essence, an infinitely small point with a huge amount of gravity - gravity so powerful that not even light can escape it's pull if it gets too close. It is also thought that black holes can be formed from smaller masses if external energy/pressure is exerted to squeeze the mass into a singularity.&lt;br /&gt;
+&lt;br /&gt;
+Not sure if there's any direct experimental evidence of creation, but there is evidence that they exist. Cosmologists use several different methods to detect blacks holes, such as by looking for light being bent and/or disappearing as it travels from remote stars towards us, and also by looking for bursts of x-rays that are given off as matter is sucked into the back hole and destroyed.&lt;br /&gt;
+&lt;br /&gt;
+Fun fact: current evidence and theory suggests that the center of the Milky Way is a giant black hole that was formed as the densly packed stars in the center collapsed and sucked each other in.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            23 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              30 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="uri-badge">#1751619</span>
+</div>
+</div></article><article class="card card-edu"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-edu">📚 Education &amp; Reference</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Trivia</div>
+<h2 class="question">Why are yawns contagious?</h2>
+<p class="content-text">When people yawn, you see that other people in the room yawn, too.  Why is that?</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">When your body need more oxygen, you yawn.  &lt;br /&gt;
+When you yawn, you take more oxygen in the air.  &lt;br /&gt;
+If the density of the oxygen in the air becomes lower, other people (their bodies) can feel that and start to yawn to get more oxygen.&lt;br /&gt;
+That's why yawns are contagious. Yawning is extremely contagious -- 55% of people who witness someone yawn will yawn within five minutes. If a visually impaired person hears a tape of someone yawning, he or she is likely to yawn as well. Face it, the likelihood of you making it to the end of this answer without looking like one of these gaping maws is unlikely. &lt;br /&gt;
+Although the contagious nature of yawning is well established, we know less about why this is so. Researchers are currently giving the topic some serious attention. One theory suggests it's a holdover from a period in evolutionary history when yawning served to coordinate the social behavior of a group of animals. A recent study postulates that contagious yawning could be part of the "neural network involved in empathy." &lt;br /&gt;
+&lt;br /&gt;
+While the mystery of contagious yawning has yet to be solved, perhaps researchers are closing in on an answer. On the other hand, given the subject matter, we wouldn't blame them for falling asleep at the wheel. In the meantime, give the "yawn challenge" a try -- it's tougher than it looks.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Yawning is extremely contagious -- 55% of people who witness someone yawn will yawn within five minutes. If a visually impaired person hears a tape of someone yawning, he or she is likely to yawn as well. Face it, the likelihood of you making it to the end of this answer without looking like one of these gaping maws is unlikely. &lt;br /&gt;
+Although the contagious nature of yawning is well established, we know less about why this is so. Researchers are currently giving the topic some serious attention. One theory suggests it's a holdover from a period in evolutionary history when yawning served to coordinate the social behavior of a group of animals. A recent study postulates that contagious yawning could be part of the "neural network involved in empathy." &lt;br /&gt;
+&lt;br /&gt;
+While the mystery of contagious yawning has yet to be solved, perhaps researchers are closing in on an answer. On the other hand, given the subject matter, we wouldn't blame them for falling asleep at the wheel. In the meantime, give the "yawn challenge" a try -- it's tougher than it looks.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>When your body need more oxygen, you yawn.  &lt;br /&gt;
+When you yawn, you take more oxygen in the air.  &lt;br /&gt;
+If the density of the oxygen in the air becomes lower, other people (their bodies) can feel that and start to yawn to get more oxygen.&lt;br /&gt;
+That's why yawns are contagious.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Sep 2005</span><span class="date-item">
+              ✓ Resolved:
+              1 Jul 2005</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u1254780</span><span class="uri-badge">#432470</span>
+</div>
+</div></article><article class="card card-edu"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-edu">📚 Education &amp; Reference</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Quotations</div>
+<h2 class="question">Who said the statement below and what does it mean?</h2>
+<p class="content-text">Can someone help me with understanding someone else's wisdom, please?&lt;br&gt;&lt;br&gt;" It is very easy in the world to live by the opinion of the world. It is very easy in solitude to be self-centered. But the finished man is he who in the midst of the crowd keeps with perfect sweetness the independence of solitude. "</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">That is kind of a tricky little quote. Sometimes placing it in context can help. This is a quote from Ralph Waldo Emerson's essay "Self Reliance," which discourages basing one's opinions and actions on common opinion in favor of self-trust (see the full essay at http://www.emersoncentral.com/selfreliance.htm). &lt;br /&gt;
+&lt;br /&gt;
+I think the point of this quote is that it's very desireable to have one's own original thoughts and opinions, and to live by them.  It's easier to live by one's own convictions and not be persuaded by others when in isolation (that's the "independence of solitude"). However, not so special to isolate oneself from others in order to attain this ideal. Because it's difficult to live by one's own thoughts and opinions while being a part of society, it's something only a "finished man" can truly do. Also, in the essay, Emerson refers to being childlike - unselfish, non-judgmental, open-minded, uncynical, unhesitant - as something to admire. So I think that's where the seemingly misplaced "perfect sweetness" comes in. When a man can remain pure of heart while living in the harsh world and also keeping and living by his own ideals. &lt;br /&gt;
+&lt;br /&gt;
+What do you think?</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>That is kind of a tricky little quote. Sometimes placing it in context can help. This is a quote from Ralph Waldo Emerson's essay "Self Reliance," which discourages basing one's opinions and actions on common opinion in favor of self-trust (see the full essay at http://www.emersoncentral.com/selfreliance.htm). &lt;br /&gt;
+&lt;br /&gt;
+I think the point of this quote is that it's very desireable to have one's own original thoughts and opinions, and to live by them.  It's easier to live by one's own convictions and not be persuaded by others when in isolation (that's the "independence of solitude"). However, not so special to isolate oneself from others in order to attain this ideal. Because it's difficult to live by one's own thoughts and opinions while being a part of society, it's something only a "finished man" can truly do. Also, in the essay, Emerson refers to being childlike - unselfish, non-judgmental, open-minded, uncynical, unhesitant - as something to admire. So I think that's where the seemingly misplaced "perfect sweetness" comes in. When a man can remain pure of heart while living in the harsh world and also keeping and living by his own ideals. &lt;br /&gt;
+&lt;br /&gt;
+What do you think?</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            26 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              1 Sep 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u23481</span><span class="uri-badge">#1118429</span>
+</div>
+</div></article><article class="card card-edu"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-edu">📚 Education &amp; Reference</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Other - Education</div>
+<h2 class="question">How do I find an out of print book?</h2>
+<p class="content-text">When I was a kid I remember seeing a book that was like an yearbook of all newspapers published by the Times during WW II. Each of the years is compiled into a different book. &lt;br&gt;It gave one a very uniqie perspecitev into the UK druing the war, and even had advertisements from thaat time.&lt;br&gt;Anybody out there know how to track such books?</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">There are several websites that you can find rare or out of print books.  A couple would be alibris.com or abebooks.com.  These sites list books by booksellers all over the country and some internationally.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>There are several websites that you can find rare or out of print books.  A couple would be alibris.com or abebooks.com.  These sites list books by booksellers all over the country and some internationally.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Bookfinder does a metasearch across various online used book stores</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Sep 2005</span><span class="date-item">
+              ✓ Resolved:
+              4 Oct 2005</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u589526</span><span class="uri-badge">#1239951</span>
+</div>
+</div></article><article class="card card-edu"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-edu">📚 Education &amp; Reference</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Trivia</div>
+<h2 class="question">How to get rid of a beehive?</h2>
+<p class="content-text">Who can tell me how to get rid of a beehive with out getting stung?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">Call an area apiarist.  They should be able to help you and would most likely remove them at no charge in exchange for the hive.  The bees have value and they now belong to you.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Call an area apiarist.  They should be able to help you and would most likely remove them at no charge in exchange for the hive.  The bees have value and they now belong to you.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Don't try this yourself but this is what the old fashioned way is - done in some villages in other parts of the world.&lt;br /&gt;
+&lt;br /&gt;
+The guy who dismantles, wears a mask with holes at the eyes so he can see, carries a big sack with burning coals in it.  He also wraps his hands with thick cloths, carries an empty bag to collect the honey in it.&lt;br /&gt;
+He then collects the honey in the empty bag, pulls the hive into the bag of coals.&lt;br /&gt;
+&lt;br /&gt;
+If he just wants to collect the honey, he would leave after collecting the honey - but the bag of coals is used to choke &amp; burn the bees if he wanted to get rid of the hive.&lt;br /&gt;
+&lt;br /&gt;
+That's a bit like coding in COBOL &amp; assembly :)</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            16 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              18 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u1233931</span><span class="uri-badge">#2874684</span>
+</div>
+</div></article><article class="card card-edu"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-edu">📚 Education &amp; Reference</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Primary &amp; Secondary Education</div>
+<h2 class="question">Which are the best K-12 public schools in the SF Bay area?</h2>
+<p class="content-text">Which are the best K-12 public schools in the SF Bay area?</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">it depends on what you're looking for.&lt;br /&gt;
+&lt;br /&gt;
+Cupertino district has some of the best test scores, but the flavor of the classes and homework is very intense. creativity is not promoted, but instead repetitive training and exercises are encouraged. Some people find this stifling, but this district is VERY popular especially with people of asian origin.&lt;br /&gt;
+&lt;br /&gt;
+Neighboring Saratoga has similar or better scores, but the corriculum encourages much more diversity and creativity.&lt;br /&gt;
+&lt;br /&gt;
+Palo Alto has a mixture of very good and average schools, so it depends which ones you get in to. The flavor is generally similar to Saratoga, and maybe a tad less competitive.&lt;br /&gt;
+&lt;br /&gt;
+Another district to consider is Los Altos, the main problem there is that the high school is not very good.&lt;br /&gt;
+&lt;br /&gt;
+The attached URL will give you very good insight into the scores and quality of the schools as well as demographics, but unfortunately very little insight into the "flavor" of each.</div>
+</div>
+<details class="alt"><summary>
+              💬 4 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>it depends on what you're looking for.&lt;br /&gt;
+&lt;br /&gt;
+Cupertino district has some of the best test scores, but the flavor of the classes and homework is very intense. creativity is not promoted, but instead repetitive training and exercises are encouraged. Some people find this stifling, but this district is VERY popular especially with people of asian origin.&lt;br /&gt;
+&lt;br /&gt;
+Neighboring Saratoga has similar or better scores, but the corriculum encourages much more diversity and creativity.&lt;br /&gt;
+&lt;br /&gt;
+Palo Alto has a mixture of very good and average schools, so it depends which ones you get in to. The flavor is generally similar to Saratoga, and maybe a tad less competitive.&lt;br /&gt;
+&lt;br /&gt;
+Another district to consider is Los Altos, the main problem there is that the high school is not very good.&lt;br /&gt;
+&lt;br /&gt;
+The attached URL will give you very good insight into the scores and quality of the schools as well as demographics, but unfortunately very little insight into the "flavor" of each.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Many of my friends with school age kids rave about the Cupertino system. Saratoga and Palo Alto are also always mentioned as a district where people move into that district for the schools.</div>
+<div class="alt-item">
+<span class="alt-n">#3</span>Some selected schools from&lt;br /&gt;
+Cupertino, Palo Alto, Los Altos Hills, Saratoga, Fremont Mission, San Jose Unified.&lt;br /&gt;
+Most of them score above 900 points in school ratings.</div>
+<div class="alt-item">
+<span class="alt-n">#4</span>It really depends on your notion of "best."  There are some great schools in many of the places mentioned, but they aren't always the ones that get the highest test scores.&lt;br /&gt;
+&lt;br /&gt;
+In Cupertino, for example, there are several alternative public schools or programs as well as the "regular" neighborhood schools. Faria is a "back-to-basics" school that focuses strictly on academic achievement and gets the highest test scores in the state.  In contrast, McAuliffe school has a nontraditional integrated curriculum and focuses on teaching kids how to think for themselves.  Each of these schools has a lottery to get in, and a waiting list.  Each of these might be a great place, but depending on your values and your child's learning style, they probably wouldn't both be good for the same kids.   &lt;br /&gt;
+&lt;br /&gt;
+Incidentally, California schools are among the worst funded in the nation.  Most elementary school classes have 32 kids in them.  In other states, it's typically much less.  A friend of mine in Wisconsin had a teacher apologize because his child was put in such a "large" class -- 23 students.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Sep 2005</span><span class="date-item">
+              ✓ Resolved:
+              4 Oct 2005</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u241843</span><span class="uri-badge">#663210</span>
+</div>
+</div></article><article class="card card-edu"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-edu">📚 Education &amp; Reference</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Words &amp; Wordplay</div>
+<h2 class="question">What's the longest english word without a vowel in it?</h2>
+<p class="content-text">and what does that word mean if it's not a common word.</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">The longest word without a vowel is Rhythm.&lt;br /&gt;
+&lt;br /&gt;
+It is referenced on below web site where you can find more fun facts.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>The longest word without a vowel is Rhythm.&lt;br /&gt;
+&lt;br /&gt;
+It is referenced on below web site where you can find more fun facts.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Syzygy is another answer, admittedly a bit less common than rhythm</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Sep 2005</span><span class="date-item">
+              ✓ Resolved:
+              29 Sep 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u23481</span><span class="uri-badge">#2542068</span>
+</div>
+</div></article><article class="card card-soc"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-soc">👥 Social Science</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Psychology</div>
+<h2 class="question">What is the difference between Askers and Answerers?</h2>
+<p class="content-text">Is it the same difference as Talkers vs Doers, Dumbos vs Smarties? Do people tend to fall primarily into one category or the other?</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">one can argue that in order to become an answerer you first need to be an asker- how would you gather a more then common knowledge information- you need to inquire, thus ask many questions. only then you can answer other's people questions.
+
+So- He who wants to become an answerer must first be an asker</div>
+</div>
+<details class="alt"><summary>
+              💬 3 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>one can argue that in order to become an answerer you first need to be an asker- how would you gather a more then common knowledge information- you need to inquire, thus ask many questions. only then you can answer other's people questions.
+
+So- He who wants to become an answerer must first be an asker</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>ego? No seriously, I try to imagine us all on a continuum of how much stuff we know. There are people higher than me and people lower than me on the path to knowing a lot of stuff. I get advice from the people higher than me on a given subject. A person that is lower than me in one subject is higher than me on another, so I am an asker and an answering. Forever! Always more to know!!</div>
+<div class="alt-item">
+<span class="alt-n">#3</span>Can one truely ever be said to be an answerer? or an asker for that matter? in the manifested world there is to much to be learned in a lifetime? best to be equally be open to both teacher and student.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            24 Nov 2005</span><span class="date-item">
+              ✓ Resolved:
+              25 Dec 2005</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u1501993</span><span class="uri-badge">#4071191</span>
+</div>
+</div></article><article class="card card-soc"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-soc">👥 Social Science</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Psychology</div>
+<h2 class="question">I need tips to be a strong leader.?</h2>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">Never show weakness..always think things through..lead by example...be curtious of your followers...and learn by your mistakes.</div>
+</div>
+<details class="alt"><summary>
+              💬 9 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Never show weakness..always think things through..lead by example...be curtious of your followers...and learn by your mistakes.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Be confident in what you do, give credit to others when things go well, accept responsibility for things that don't go well.  Be clear on what the job/task is and communicate along the way.  Don't forget to celebrate the accomplishments!</div>
+<div class="alt-item">
+<span class="alt-n">#3</span>Find some folks willing to follow you. Then make them drink cool aid.</div>
+<div class="alt-item">
+<span class="alt-n">#4</span>Okay ... here it is ... check out Peak Potentials.  They have AWESOME training camps for every aspect of life.  Sounds to me like you need Enlightened Warrior Training.</div>
+<div class="alt-item">
+<span class="alt-n">#5</span>I once heard a wise man say that "You think you are leading but if noone is following, then you are just taking a walk" What it means is who are you trying to get to follow you? How did the PidePiper get his rats to follow him? He used something that they enjoy. No type of force or demanding will get people to follow you. It also doesn't take a carasmatic leader to lead either. A shepherd with sheep cares for his flock, and tends to their need. THat is why they follow the shepherd. And it doesn't hurt to have a few sheep dogs to keep them in line..haha 
+But beside the point. Be careful who you are leading. Maybe all they want is a companion. THink about it.</div>
+<div class="alt-item">
+<span class="alt-n">#6</span>To be a strong leader you must have excellent communication skills, and people skills.  Even though you are the leader, listen to your team.  People are more willing to work hard for someone they like and respect, rather than someone who barks orders and never listens to thier concerns. Don't delegate tasks with a military style attitude and you should be fine.</div>
+<div class="alt-item">
+<span class="alt-n">#7</span>Just be yourself. no questions asked. but P.S-people usually admire people who act confident in their self and often look good -so if those qualities dont fit you, you know what to do!</div>
+<div class="alt-item">
+<span class="alt-n">#8</span>give up trying to be a strong leader.  just do your work as best as you know how.  focus on the people and job at hand.  its not about you.  when u realise this, you will be the type of person i admire.</div>
+<div class="alt-item">
+<span class="alt-n">#9</span>i can suggest u to search one of the most skillful leader in the history: Mustafa Kemal Ataturk..ı'm sure it will give u inspirations about being a good leader..</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            29 Dec 2005</span><span class="date-item">
+              ✓ Resolved:
+              30 Dec 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u308914</span><span class="uri-badge">#581183</span>
+</div>
+</div></article><article class="card card-soc"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-soc">👥 Social Science</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Gender &amp; Women's Studies</div>
+<h2 class="question">Do you Believe in God? Why? Has he ever helped you?</h2>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">I opened my eys to the world. There's no god. I wake uo myslef.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>I opened my eys to the world. There's no god. I wake uo myslef.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>ahh the age old question. I do believe in a higher power not saying it is or isnt what the bible declares but there is something out there. has it ever helped me i couldnt say for sure but i like to think he/she/it has given me a hand every now and then</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            31 Dec 2005</span><span class="date-item">
+              ✓ Resolved:
+              31 Dec 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u1707799</span><span class="uri-badge">#97663</span>
+</div>
+</div></article><article class="card card-soc"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-soc">👥 Social Science</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Psychology</div>
+<h2 class="question">Do animals have phobias? Or just humans?</h2>
+<p class="content-text">I'm doing a Psychology final on Phobias, and I was just wondering if animals have phobias or if they are just using their primal instincts? AND.....do you think fears are a product of society or are they just in our nature to be afraid of things?</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">The answer to the first question is yes, an animal can have a phobia. “A phobia is an abnormal, persistent fear of situations, objects, activities, of persons. The main symptom of this disorder is the excessive, unreasonable desire to avoid the feared subject.” If an animal, shows the main symptom of a phobia, we could say that the animal had develop or have a phobia. 
+ The answer to the second question is: depending on the feared object. If the main symptom of a phobia is present in an animal since is birth, it’s an instinctive behaviour but if the behaviour appears later on life, it’s a learned fear, using the terminology created by Ivan Pavlov, an instinctive behaviour is an unconditional reflex and the behaviour result from a learning process is a conditional reflex.
+  The last answer: most of our fears are conditional reflexes, we learn to be afraid of things and the same process happens with animals, example: a clap my hands(neutral stimuli) next to my dog and immediately after I scream really loud, (this will scare my dog because is an unconditional response); (all dogs will responde in the same way) after a few times, my dog will be scare of the sound of the clapping hands, my dog is showing a phobic behaviour; why? Because I associate one unconditional response with a neutral stimuli.
+  Classic conditioning was discover by Ivan Pavlov who created the principles of the behaviourism</div>
+</div>
+<details class="alt"><summary>
+              💬 6 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>The answer to the first question is yes, an animal can have a phobia. “A phobia is an abnormal, persistent fear of situations, objects, activities, of persons. The main symptom of this disorder is the excessive, unreasonable desire to avoid the feared subject.” If an animal, shows the main symptom of a phobia, we could say that the animal had develop or have a phobia. 
+ The answer to the second question is: depending on the feared object. If the main symptom of a phobia is present in an animal since is birth, it’s an instinctive behaviour but if the behaviour appears later on life, it’s a learned fear, using the terminology created by Ivan Pavlov, an instinctive behaviour is an unconditional reflex and the behaviour result from a learning process is a conditional reflex.
+  The last answer: most of our fears are conditional reflexes, we learn to be afraid of things and the same process happens with animals, example: a clap my hands(neutral stimuli) next to my dog and immediately after I scream really loud, (this will scare my dog because is an unconditional response); (all dogs will responde in the same way) after a few times, my dog will be scare of the sound of the clapping hands, my dog is showing a phobic behaviour; why? Because I associate one unconditional response with a neutral stimuli.
+  Classic conditioning was discover by Ivan Pavlov who created the principles of the behaviourism</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>just humans because humans have a much more complex psycology and animals all refer to their intincts (they realy dont have thoughts) preety much if you pop a balloon in a room all the dogs in the room will act the same unlike humans</div>
+<div class="alt-item">
+<span class="alt-n">#3</span>All of my pets have things they are irrationally afraid of.  For instance, one cat is afraid of the sound a plastic grocery bag makes when you crinkle it.</div>
+<div class="alt-item">
+<span class="alt-n">#4</span>I say yes. I know a dog afraid of thunder and associates it with lightening. Also hides from the vacum</div>
+<div class="alt-item">
+<span class="alt-n">#5</span>I would say Im not sure. Once my father told my brother to bathe the dog, and he used some strong chemicals he did not intend to use. From then on, for over 4 or 5 years, whenever ANYONE takes or grabs the hose, the dog goes into his house. He is extremely afraid of the hose, as he remember the pain. I don't know if this is instinct, it seems it might be a reaction to what once hurt him.</div>
+<div class="alt-item">
+<span class="alt-n">#6</span>Its funny that you should mention a phobia in animals.  They can learn to develop a phobia, and I believe they are born with them too.  A rabit in the wild will always run if it is chased, whether it is in danger or not.  You may relate this to a human who has a phobia on spiders running everytime they see one.
+
+Then again, you could say this was purly instinct.  Anamils naturally fear loud noises, as do humans. Humans are inately born with 2 fears.  Loud noises and light.  I know this sounds funny, but if someone shines a bright light in your eyes, you shield them.  And by fear, i don't mean scary like monsters.  If you did this to a baby, it would cry.  It is a different type of fear.  Animals too fear lound noises.  There instincts tell them that they may be in danger if they don't hide or run.  This is why the paper bag crinkling (their ears are also more fine tuned and sensitive, so it is loud to them) frightens them, and the lightening &amp; thunder. 
+
+I hope this has helped.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            11 Dec 2005</span><span class="date-item">
+              ✓ Resolved:
+              1 Jan 2006</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u1022445</span><span class="uri-badge">#2074826</span>
+</div>
+</div></article><article class="card card-art"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-art">🎨 Arts &amp; Humanities</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Philosophy</div>
+<h2 class="question">what is the meaning of life ?</h2>
+<p class="content-text">what is the meaning of life ? and please don't say it's 42.</p>
+<div class="best-answer">
+<div class="best-answer-label">🏆 Best Answer · voted by community</div>
+<div class="best-answer-text">To answer this question, you need to step back.  You'll notice that most fish and frogs do not ponder life's meaning.  In fact, as far as we can tell, most animals live life the best they can and don't waste much time pondering the "meaning" of it all.  Given that we are descended from them, then an appropriate preface to your question is "why do we even ask about meaning?"&lt;br /&gt;
+&lt;br /&gt;
+The best answer that anthropologists have to date is that sometime around the time that our brains started to recognize our own mortality as a concept, the behavior of ancient societies started to change.  We began to bury our dead, and we began to have animistic proto-religions.&lt;br /&gt;
+&lt;br /&gt;
+This was all sparked by the human ability to recognize cause and effect.  This was essential for tool-making, and it set up the mental construct -- if this, then that.  Which set up the possibility for the construct called meaning: (i.e. if I observed that, then it means that this happened).  Now this type of simple causal reasoning allowed us to do all manner of things... from building stone tools toward developing science, technology and forming societies with rules, etc.  &lt;br /&gt;
+&lt;br /&gt;
+But that same reasoning applied to the question of existence becomes a lot less clear.  Causal reasoning would say: if I am here, then it means that some other thing must be true.  If also say, if I do something, then it is more useful (and easier to understand) if it has a meaning than if it doesn't.  Now the problem is that life does not have any meaning in particular.  For a while human kind got along pretty well by creating artificial systems of meaning... usually around religion or work, but the existentialists came along and pulled the rug right out from under this type of thinking.&lt;br /&gt;
+&lt;br /&gt;
+Given that life has no absolute top-down meaning, we are left with just a few options.  We can get meaning by subscribing to one of the old constructs (religion, etc), or we can do what Nietche suggested and have each individual define a system of meaning for themselves.  This is easier said than done, but is probably the only way to estable meaning without subscribing to the illusions of others.&lt;br /&gt;
+&lt;br /&gt;
+Outside of these approaches, which are decided Western in their origins, we can take an Eastern approach.  This is simply to state that it not important to have meaning.  Life simply is.  Whether we reach this non-meaning state by flowing with the Tao, or do it by transcedental meditation that allows us to escape from our sense of self (and thus our personal need for meaning), we simply leave meaning on the doorstep.  This is helpful, because the question of the "meaning of life" may actually just be an absurd question... and a well considered answer to an absurd question is simply absurd.&lt;br /&gt;
+&lt;br /&gt;
+Anyhow, I hope that helps.</div>
+</div>
+<details class="alt"><summary>
+              💬 4 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>To answer this question, you need to step back.  You'll notice that most fish and frogs do not ponder life's meaning.  In fact, as far as we can tell, most animals live life the best they can and don't waste much time pondering the "meaning" of it all.  Given that we are descended from them, then an appropriate preface to your question is "why do we even ask about meaning?"&lt;br /&gt;
+&lt;br /&gt;
+The best answer that anthropologists have to date is that sometime around the time that our brains started to recognize our own mortality as a concept, the behavior of ancient societies started to change.  We began to bury our dead, and we began to have animistic proto-religions.&lt;br /&gt;
+&lt;br /&gt;
+This was all sparked by the human ability to recognize cause and effect.  This was essential for tool-making, and it set up the mental construct -- if this, then that.  Which set up the possibility for the construct called meaning: (i.e. if I observed that, then it means that this happened).  Now this type of simple causal reasoning allowed us to do all manner of things... from building stone tools toward developing science, technology and forming societies with rules, etc.  &lt;br /&gt;
+&lt;br /&gt;
+But that same reasoning applied to the question of existence becomes a lot less clear.  Causal reasoning would say: if I am here, then it means that some other thing must be true.  If also say, if I do something, then it is more useful (and easier to understand) if it has a meaning than if it doesn't.  Now the problem is that life does not have any meaning in particular.  For a while human kind got along pretty well by creating artificial systems of meaning... usually around religion or work, but the existentialists came along and pulled the rug right out from under this type of thinking.&lt;br /&gt;
+&lt;br /&gt;
+Given that life has no absolute top-down meaning, we are left with just a few options.  We can get meaning by subscribing to one of the old constructs (religion, etc), or we can do what Nietche suggested and have each individual define a system of meaning for themselves.  This is easier said than done, but is probably the only way to estable meaning without subscribing to the illusions of others.&lt;br /&gt;
+&lt;br /&gt;
+Outside of these approaches, which are decided Western in their origins, we can take an Eastern approach.  This is simply to state that it not important to have meaning.  Life simply is.  Whether we reach this non-meaning state by flowing with the Tao, or do it by transcedental meditation that allows us to escape from our sense of self (and thus our personal need for meaning), we simply leave meaning on the doorstep.  This is helpful, because the question of the "meaning of life" may actually just be an absurd question... and a well considered answer to an absurd question is simply absurd.&lt;br /&gt;
+&lt;br /&gt;
+Anyhow, I hope that helps.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>It's a great Monty Python film.  Not to be missed!</div>
+<div class="alt-item">
+<span class="alt-n">#3</span>I would consider being the meaning of life what one makes it to be; meaning that it is solely depends on each and everyone to define what makes him/her happy.&lt;br /&gt;
+I believe that my own propose here on earth is to leave a good and happy life, therefore it is only up to me to define what it is for me to be happy and to have agood life</div>
+<div class="alt-item">
+<span class="alt-n">#4</span>41, plus or minus two.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Sep 2005</span><span class="date-item">
+              ✓ Resolved:
+              4 Oct 2005</span>
+</div>
+<div class="meta-right">
+<span class="voted-badge">⭐ Community pick</span><span class="author-id">👤 u785001</span><span class="uri-badge">#347973</span>
+</div>
+</div></article><article class="card card-art"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-art">🎨 Arts &amp; Humanities</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Books &amp; Authors</div>
+<h2 class="question">Are things mentioned about Leonardo in Da Vinci Code true?</h2>
+<p class="content-text">Dan Brown claimed a lot of things about Leonardo Da Vinci in his The Da Vinci Code.  Is that all true or is it sensationalism?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">Some histroy is "true", but some are just come out from imagination.</div>
+</div>
+<details class="alt"><summary>
+              💬 2 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Some histroy is "true", but some are just come out from imagination.</div>
+<div class="alt-item">
+<span class="alt-n">#2</span>Are you familiar with HG Wells and his 1938 War of the Worlds?&lt;br /&gt;
+&lt;br /&gt;
+If not, check out: http://www.war-of-the-worlds.org/Radio/&lt;br /&gt;
+&lt;br /&gt;
+This was a fictional radio news broadcast about aliens invading the earth. It prompted mass hysteria in America. People believed it.&lt;br /&gt;
+&lt;br /&gt;
+The genius of both Brown and Wells is how effectively they both fooled the public. The only concern with Brown is he has not admitted it. Please note, I *could* be wrong and Brown may be deluded. I'm assuming otherwise because I understand he has sequels still coming out.&lt;br /&gt;
+&lt;br /&gt;
+Historians, and particular art historians, do not take the book seriously as history. See:&lt;br /&gt;
+http://arthistory.about.com/od/davincicode/index_a.htm&lt;br /&gt;
+&lt;br /&gt;
+Christians take the book seriously because it is defamatory even if fiction, comparable to The Last Temptation of Christ.&lt;br /&gt;
+&lt;br /&gt;
+A Roman Catholic summary:&lt;br /&gt;
+http://www.catholic.com/library/cracking_da_vinci_code.asp&lt;br /&gt;
+&lt;br /&gt;
+A non-Roman Catholic summary:&lt;br /&gt;
+http://www.christianitytoday.com/history/special/davincicode.html</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            20 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              25 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u605834</span><span class="uri-badge">#604042</span>
+</div>
+</div></article><article class="card card-art"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-art">🎨 Arts &amp; Humanities</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Philosophy</div>
+<h2 class="question">Isn't Non-Violence and Non-Cooperation more effective than War?</h2>
+<p class="content-text">[philosophy subcategory]&lt;br&gt;&lt;br&gt;any thoughts on this topic?</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">Not to be a punk, but it really depends on what you mean by non-violence, non-cooperation, and effective. As many people have noted, we've been non-violent and non-cooperative with Cuba and North Korea for many years, and that hasn't been particularly effective. Which doesn't mean war is the answer. Just means non-cooperation and effective can mean a lot of things.</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Not to be a punk, but it really depends on what you mean by non-violence, non-cooperation, and effective. As many people have noted, we've been non-violent and non-cooperative with Cuba and North Korea for many years, and that hasn't been particularly effective. Which doesn't mean war is the answer. Just means non-cooperation and effective can mean a lot of things.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              3 Sep 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u605834</span><span class="uri-badge">#3726864</span>
+</div>
+</div></article><article class="card card-art"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-art">🎨 Arts &amp; Humanities</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ History</div>
+<h2 class="question">Who was the fifteenth president?</h2>
+<p class="content-text">I have forgotten my US history.</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">The 15th president was James Buchanan. You can see a listing of all the Presidents on Yahoo! Education.</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>The 15th president was James Buchanan. You can see a listing of all the Presidents on Yahoo! Education.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            30 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              31 Aug 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u1061966</span><span class="uri-badge">#1601475</span>
+</div>
+</div></article><article class="card card-art"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-art">🎨 Arts &amp; Humanities</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ Books &amp; Authors</div>
+<h2 class="question">Who authored Hotel, Airport, Wheels ...?</h2>
+<p class="content-text">Final Diagnosis&lt;br&gt;Money Changers&lt;br&gt;Evening News</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">the answer is...arthur hailey</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>the answer is...arthur hailey</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            25 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              3 Sep 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u605834</span><span class="uri-badge">#3970851</span>
+</div>
+</div></article><article class="card card-art"><div class="card-stripe"></div>
+<div class="card-body">
+<div class="card-top">
+<span class="badge badge-art">🎨 Arts &amp; Humanities</span><span class="lang-badge">🇺🇸
+             en-us</span>
+</div>
+<div class="subcat">↳ History</div>
+<h2 class="question">What is the historical line of the bible era?</h2>
+<p class="content-text">I’m looking to have a wide perspective on that era in terms of years- meaning historical milestones like: in what years were the Jewish people in Egypt, when was the bible given to the Jewish people, when did the Israeli kings ruled, etc.</p>
+<div class="best-answer">
+<div class="best-answer-label">✍ Best Answer · chosen by author</div>
+<div class="best-answer-text">Around 349 AD is when Christianity started to fracture/ruin the Roman Empire.&lt;br /&gt;
+&lt;br /&gt;
+After 700 AD the Empire was pretty much in ruins.&lt;br /&gt;
+&lt;br /&gt;
+From there you can extrapolate around 349 AD to find what was happening to the Jews since they were under the governance of the Empire.</div>
+</div>
+<details class="alt"><summary>
+              💬 1 alternative answer(s) — click to expand
+            </summary><div class="alt-item">
+<span class="alt-n">#1</span>Around 349 AD is when Christianity started to fracture/ruin the Roman Empire.&lt;br /&gt;
+&lt;br /&gt;
+After 700 AD the Empire was pretty much in ruins.&lt;br /&gt;
+&lt;br /&gt;
+From there you can extrapolate around 349 AD to find what was happening to the Jews since they were under the governance of the Empire.</div></details>
+</div>
+<div class="card-footer">
+<div class="dates">
+<span class="date-item">
+            📅 Posted:
+            31 Aug 2005</span><span class="date-item">
+              ✓ Resolved:
+              5 Sep 2005</span>
+</div>
+<div class="meta-right">
+<span class="author-badge">✍ Author pick</span><span class="author-id">👤 u484353</span><span class="uri-badge">#1175921</span>
+</div>
+</div></article></main><footer>
+          Generated with XSLT 1.0 ·
+          Yahoo! Answers Dataset FullOct2007 ·
+          Bases de Datos Avanzadas · UCLM 2025-2026 ·
+          Alberto Lillo &amp; Manuel Caballero
+        </footer>
+</body>
+</html>

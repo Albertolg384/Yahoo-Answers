@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    ================================================================
+    XSD PROPUESTO — Yahoo! Answers Dataset (FullOct2007)
+    Proyecto: Trabajo XML - Bases de Datos Avanzadas
+    Autores:  Alberto Lillo García y Manuel Caballero Bonilla
+    Fecha:    Marzo de 2026
+
+    Esquema mejorado basado en:
+      1. Documentación oficial WebScope L6-1
+      2. Verificación cuantitativa con XQuery sobre 613.245 registros
+
+    ANOMALÍAS DE CALIDAD INCORPORADAS AL ESQUEMA:
+      - bestanswer, best_id:  3.857/3.864 registros sin ellos
+      - id:                      38 registros sin él
+      - nbestanswers, lastanswerts: 1 registro sin cada uno
+      → Todos modelados como opcionales (minOccurs="0")
+
+    CORRECCIÓN DE PATRONES DETECTADA CON XQUERY:
+      - qintl: el valor "e1" aparece en 4.757 registros
+        No es un código ISO puro de letras → patrón ampliado
+        a [a-z0-9]{2} para incluir códigos con dígitos
+      - language: "es-e1" aparece como consecuencia
+        → patrón ampliado a [a-z]{2}-[a-z0-9]{2}
+    ================================================================
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- ============================================================
+       TIPOS SIMPLES REUTILIZABLES
+  ============================================================ -->
+
+  <xs:simpleType name="UnixTimestampType">
+    <xs:annotation>
+      <xs:documentation>
+        Marca temporal Unix: entero no negativo de segundos desde
+        1970-01-01T00:00:00Z. Verificado con XQuery: 0 valores
+        no numéricos en date, res_date, vot_date y lastanswerts.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:nonNegativeInteger"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="UserIdType">
+    <xs:annotation>
+      <xs:documentation>
+        Identificador de usuario Yahoo! Answers.
+        Verificado con XQuery: 0 valores de id o best_id fuera
+        del patrón u[0-9]+ cuando el campo está presente.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="u[0-9]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DocumentTypeEnum">
+    <xs:annotation>
+      <xs:documentation>
+        Tipo de documento. Verificado con XQuery:
+        distinct-values(//document/@type) devuelve únicamente
+        el valor "wisdom" en los 613.245 registros.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="wisdom"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonEmptyStringType">
+    <xs:annotation>
+      <xs:documentation>
+        Cadena de texto con al menos un carácter.
+        Verificado con XQuery: 0 registros con subject,
+        content, bestanswer o answer_item vacíos (cuando presentes).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LanguageCodeType">
+    <xs:annotation>
+      <xs:documentation>
+        Código de idioma ISO 639-1: dos letras minúsculas.
+        Verificado con XQuery: distinct-values(//document/qlang)
+        = ca, da, de, en, es, fa, fr, hu, in, is, it, ms, nl, pt, ro, tr
+        Todos siguen el patrón [a-z]{2}. 0 excepciones.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z]{2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="RegionCodeType">
+    <xs:annotation>
+      <xs:documentation>
+        Código de región: dos caracteres alfanuméricos en minúsculas.
+        Verificado con XQuery: distinct-values(//document/qintl)
+        = ar, au, br, ca, de, e1, es, fr, in, it, mx, my, ph, sg, uk, us
+        NOTA: el valor "e1" (España alternativa) contiene un dígito,
+        lo que requiere ampliar el patrón a [a-z0-9]{2} en lugar
+        del estándar ISO puro [a-z]{2}.
+        4.757 registros tienen qintl="e1".
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z0-9]{2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LanguageRegionType">
+    <xs:annotation>
+      <xs:documentation>
+        Código combinado idioma-región.
+        Verificado con XQuery: todos los valores siguen el formato
+        xx-xx o xx-x1 (ej: en-us, es-e1, ca-fr).
+        El patrón se amplía a [a-z]{2}-[a-z0-9]{2} para cubrir
+        los 4.757 registros con language="es-e1".
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z]{2}-[a-z0-9]{2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CategoryAttributeType">
+    <xs:annotation>
+      <xs:documentation>
+        Valor del atributo category del elemento raíz.
+        Solo presente en archivos divididos por categoría.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="science"/>
+      <xs:enumeration value="education"/>
+      <xs:enumeration value="social"/>
+      <xs:enumeration value="arts"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ============================================================
+       TIPOS COMPLEJOS
+  ============================================================ -->
+
+  <xs:complexType name="NbestanswersType">
+    <xs:annotation>
+      <xs:documentation>
+        Colección de respuestas alternativas.
+        Verificado con XQuery:
+          - 1 registro sin ningún answer_item (minOccurs="0")
+          - Máximo: 1.422 answer_item en un registro
+          - Media: 5,77 answer_item por registro
+          - Mínimo cuando hay: 1
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="answer_item" type="NonEmptyStringType"
+                  minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DocumentType">
+    <xs:annotation>
+      <xs:documentation>
+        Pregunta completa con respuestas y metadatos.
+        La opcionalidad de cada campo se justifica con la
+        documentación oficial WebScope L6-1 y con la verificación
+        cuantitativa mediante XQuery sobre los 613.245 registros.
+
+        ANOMALÍAS detectadas con XQuery (campos que la doc marca
+        como mandatory pero la verificación confirma ausentes):
+          bestanswer:   3.857 ausentes → minOccurs="0"
+          best_id:      3.864 ausentes → minOccurs="0"
+          id:              38 ausentes → minOccurs="0"
+          nbestanswers:     1 ausente  → minOccurs="0"
+          lastanswerts:     1 ausente  → minOccurs="0"
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <!-- uri: 0 ausentes. Siempre entero positivo. -->
+      <xs:element name="uri"          type="xs:positiveInteger"/>
+      <!-- subject: 0 ausentes, 0 vacíos. -->
+      <xs:element name="subject"      type="NonEmptyStringType"/>
+      <!-- content: OPCIONAL (298.411 ausentes, 48,7%) -->
+      <xs:element name="content"      type="NonEmptyStringType" minOccurs="0"/>
+      <!-- bestanswer: ANOMALÍA (3.857 ausentes; 0 vacíos cuando presente) -->
+      <xs:element name="bestanswer"   type="NonEmptyStringType" minOccurs="0"/>
+      <!-- nbestanswers: ANOMALÍA (1 ausente) -->
+      <xs:element name="nbestanswers" type="NbestanswersType"   minOccurs="0"/>
+      <!-- Categorías: OPCIONALES según doc oficial; 0 ausentes en subconjunto -->
+      <xs:element name="cat"          type="NonEmptyStringType" minOccurs="0"/>
+      <xs:element name="maincat"      type="NonEmptyStringType" minOccurs="0"/>
+      <xs:element name="subcat"       type="NonEmptyStringType" minOccurs="0"/>
+      <!-- date: 0 ausentes, siempre Unix timestamp -->
+      <xs:element name="date"         type="UnixTimestampType"/>
+      <!-- res_date: OPCIONAL (3.819 ausentes) -->
+      <xs:element name="res_date"     type="UnixTimestampType"  minOccurs="0"/>
+      <!-- vot_date: OPCIONAL (206.652 ausentes, 33,7%) -->
+      <xs:element name="vot_date"     type="UnixTimestampType"  minOccurs="0"/>
+      <!-- lastanswerts: ANOMALÍA (1 ausente) -->
+      <xs:element name="lastanswerts" type="UnixTimestampType"  minOccurs="0"/>
+      <!-- Idioma/región: OPCIONALES según doc oficial; 0 ausentes en subconjunto -->
+      <xs:element name="qlang"        type="LanguageCodeType"   minOccurs="0"/>
+      <!-- qintl: patrón [a-z0-9]{2} por valor "e1" en 4.757 registros -->
+      <xs:element name="qintl"        type="RegionCodeType"     minOccurs="0"/>
+      <!-- language: patrón [a-z]{2}-[a-z0-9]{2} por "es-e1" en 4.757 registros -->
+      <xs:element name="language"     type="LanguageRegionType" minOccurs="0"/>
+      <!-- id: ANOMALÍA (38 ausentes; patrón u[0-9]+ cuando presente) -->
+      <xs:element name="id"           type="UserIdType"         minOccurs="0"/>
+      <!-- best_id: ANOMALÍA (3.864 ausentes; patrón u[0-9]+ cuando presente) -->
+      <xs:element name="best_id"      type="UserIdType"         minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="type" type="DocumentTypeEnum" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="VespaaddType">
+    <xs:annotation>
+      <xs:documentation>
+        Contenedor de registro. Cada vespaadd encapsula exactamente
+        una pregunta con todas sus respuestas y metadatos.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="document" type="DocumentType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============================================================
+       ELEMENTO RAÍZ
+  ============================================================ -->
+  <xs:element name="yahooAnswers">
+    <xs:annotation>
+      <xs:documentation>
+        Elemento raíz del dataset Yahoo! Answers filtrado.
+        613.245 preguntas de 4 categorías temáticas.
+        El atributo category solo aparece en archivos divididos.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="vespaadd" type="VespaaddType"
+                    minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="category" type="CategoryAttributeType" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

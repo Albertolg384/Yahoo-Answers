@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    ================================================================
+    XSD ORIGINAL — Yahoo! Answers Dataset (FullOct2007)
+    Proyecto: Trabajo XML - Bases de Datos Avanzadas
+    Autores:  Alberto Lillo García y Manuel Caballero Bonilla
+    Fecha:    Marzo de 2026
+
+    Este esquema describe la estructura real del dataset combinando:
+      1. Documentación oficial WebScope L6-1 (README).
+      2. Verificación cuantitativa con XQuery sobre 613.245 registros.
+
+    ANOMALÍAS DE CALIDAD DE DATOS DETECTADAS CON XQUERY:
+      - bestanswer:   3.857 registros sin este campo (doc: mandatory)
+      - best_id:      3.864 registros sin este campo (doc: mandatory)
+      - id:              38 registros sin este campo (doc: mandatory)
+      - nbestanswers:     1 registro  sin este campo (doc: mandatory)
+      - lastanswerts:     1 registro  sin este campo (doc: mandatory)
+      Todos modelados como opcionales para validar todos los registros.
+
+    CAMPOS OPCIONALES CONFIRMADOS CON XQUERY:
+      - content:    298.411 registros sin este campo (48,7%)
+      - vot_date:   206.652 registros sin este campo (33,7%)
+      - res_date:     3.819 registros sin este campo
+      - cat, maincat, subcat, qlang, qintl, language: 0 ausentes
+        en el subconjunto filtrado (todos los registros extraídos
+        tienen maincat ya que filtramos precisamente por ese campo)
+
+    TODOS LOS TIPOS son xs:string para reflejar la ausencia de
+    restricciones formales en el dataset original.
+    ================================================================
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- ============================================================
+       ELEMENTO RAÍZ
+  ============================================================ -->
+  <xs:element name="yahooAnswers">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="vespaadd" type="VespaaddType"
+                    minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <!-- Opcional: solo en archivos divididos por categoría -->
+      <xs:attribute name="category" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================================
+       TIPO: VespaaddType
+  ============================================================ -->
+  <xs:complexType name="VespaaddType">
+    <xs:sequence>
+      <xs:element name="document" type="DocumentType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============================================================
+       TIPO: DocumentType
+
+       CAMPOS OBLIGATORIOS (0 ausentes en XQuery):
+         uri, subject, date
+
+       CAMPOS OPCIONALES según documentación oficial WebScope L6-1:
+         content, cat, maincat, subcat,
+         qlang, qintl, language, res_date, vot_date
+
+       CAMPOS CON ANOMALÍA DE CALIDAD (doc: mandatory, XQuery: ausentes):
+         bestanswer   | 3.857 registros sin él  | minOccurs="0"
+         best_id      | 3.864 registros sin él  | minOccurs="0"
+         id           |    38 registros sin él  | minOccurs="0"
+         nbestanswers |     1 registro  sin él  | minOccurs="0"
+         lastanswerts |     1 registro  sin él  | minOccurs="0"
+  ============================================================ -->
+  <xs:complexType name="DocumentType">
+    <xs:sequence>
+      <xs:element name="uri"          type="xs:string"/>
+      <xs:element name="subject"      type="xs:string"/>
+      <!-- content: OPCIONAL (298.411 registros sin él, 48,7%) -->
+      <xs:element name="content"      type="xs:string"  minOccurs="0"/>
+      <!-- bestanswer: anomalía — 3.857 registros sin él -->
+      <xs:element name="bestanswer"   type="xs:string"  minOccurs="0"/>
+      <!-- nbestanswers: anomalía — 1 registro sin él -->
+      <xs:element name="nbestanswers" type="NbestanswersType" minOccurs="0"/>
+      <!-- Categorías: opcionales según doc oficial -->
+      <xs:element name="cat"          type="xs:string"  minOccurs="0"/>
+      <xs:element name="maincat"      type="xs:string"  minOccurs="0"/>
+      <xs:element name="subcat"       type="xs:string"  minOccurs="0"/>
+      <xs:element name="date"         type="xs:string"/>
+      <!-- res_date: OPCIONAL (3.819 registros sin él) -->
+      <xs:element name="res_date"     type="xs:string"  minOccurs="0"/>
+      <!-- vot_date: OPCIONAL (206.652 registros sin él, 33,7%) -->
+      <xs:element name="vot_date"     type="xs:string"  minOccurs="0"/>
+      <!-- lastanswerts: anomalía — 1 registro sin él -->
+      <xs:element name="lastanswerts" type="xs:string"  minOccurs="0"/>
+      <!-- Idioma/región: opcionales según doc oficial -->
+      <xs:element name="qlang"        type="xs:string"  minOccurs="0"/>
+      <xs:element name="qintl"        type="xs:string"  minOccurs="0"/>
+      <xs:element name="language"     type="xs:string"  minOccurs="0"/>
+      <!-- id: anomalía — 38 registros sin él -->
+      <xs:element name="id"           type="xs:string"  minOccurs="0"/>
+      <!-- best_id: anomalía — 3.864 registros sin él -->
+      <xs:element name="best_id"      type="xs:string"  minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="type" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <!-- ============================================================
+       TIPO: NbestanswersType
+       Verificado con XQuery: máximo 1.422 answer_item,
+       media 5,77, mínimo 0 (1 registro vacío).
+  ============================================================ -->
+  <xs:complexType name="NbestanswersType">
+    <xs:sequence>
+      <xs:element name="answer_item" type="xs:string"
+                  minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>
